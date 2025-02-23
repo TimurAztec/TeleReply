@@ -1,7 +1,8 @@
 import base64
 import io
 import os
-import time
+import random
+import ffmpeg
 from PIL import Image
 import openai
 from openai import AsyncOpenAI
@@ -24,7 +25,7 @@ openai_client = AsyncOpenAI(
 reply_enabled = True
 chats_history = defaultdict(list)
 
-NUM_PREVIOUS_MESSAGES = 10
+NUM_PREVIOUS_MESSAGES = 11
 
 @client.on(events.NewMessage(incoming=False))
 async def toggle_reply(event):
@@ -47,50 +48,85 @@ async def handle_private_message(event):
     
     if (event.is_group and str(event.chat_id) not in ALLOWED_GROUP_IDS) or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document)):
         return
+    
+    sender_id = event.sender_id if not event.is_group else event.chat_id
 
-    if not chats_history[event.sender_id]:
+    if not chats_history[sender_id]:
         previous_messages = await client.get_messages(event.chat_id, limit=NUM_PREVIOUS_MESSAGES)
         
         for msg in previous_messages:
             if msg.from_id != me.id:
-                chats_history[event.sender_id].append({"role": "user", "content": msg.text})
+                chats_history[sender_id].append({"role": "user", "content": msg.text})
             if msg.from_id == me.id:
-                chats_history[event.sender_id].append({"role": "assistant", "content": msg.text})
+                chats_history[sender_id].append({"role": "assistant", "content": msg.text})
 
-    chats_history[event.sender_id].append({"role": "user", "content": event.text})
+    chats_history[sender_id].append({"role": "user", "content": event.text})
     
     if event.is_group and not check_mention(me, event):
         return
 
     if not reply_enabled:
         return
-    
+
     try:
         system_message = {
             "role": "system",
             "content": SYS_PROMPT
         }
-        history = chats_history[event.sender_id][-10:]
+        history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
         history.insert(0, system_message)
-        
-        file_path = None
 
         if event.photo or event.document:
-            file_path = await event.download_media()
-            image = process_image(file_path)
+            print(f"Image type: {event.document.mime_type}")
+            if event.document and event.document.mime_type == "image/gif":
+                blob = await event.download_media(bytes)
+                image = Image.open(io.BytesIO(blob))
+                image = image.convert("RGB")
+                buffer = io.BytesIO()
+                image.save(buffer, format="JPEG")
+                image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            elif event.document and event.document.mime_type == "video/webm":
+                blob = await event.download_media(bytes)
+                out, _ = (
+                    ffmpeg.input("pipe:0")
+                    .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
+                    .run(input=blob, capture_stdout=True, capture_stderr=True)
+                )
+                image = Image.open(io.BytesIO(out))
+                image = image.convert("RGB")
+                buffer = io.BytesIO()
+                image.save(buffer, format="JPEG")
+                image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            elif event.document and event.document.mime_type == "video/mp4":
+                blob = await event.download_media(bytes)
+                out, _ = (
+                    ffmpeg.input("pipe:0")
+                    .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
+                    .run(input=blob, capture_stdout=True, capture_stderr=True)
+                )
+                image = Image.open(io.BytesIO(out))
+                image = image.convert("RGB")
+
+                buffer = io.BytesIO()
+                image.save(buffer, format="JPEG")
+                image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            else:
+                blob = await event.download_media(bytes)
+                image_base64 = base64.b64encode(blob).decode("utf-8")
 
             history.append({
                 "role": "user",
                 "content": [
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}", "detail": "auto"}}
+                    {"type": "image_url",
+                     "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}}
                 ]
             })
 
         response = await openai_client.chat.completions.create(
             model="gpt-4-turbo",
             messages=history,
-            max_tokens=666,
-            temperature=0.33
+            max_tokens=round(random.uniform(333, 1000)),
+            temperature=random.uniform(0.25, 0.666)
         )
         
         explanation = response.choices[0].message.content.strip()
@@ -100,14 +136,7 @@ async def handle_private_message(event):
 
         await event.respond(explanation)
 
-        chats_history[event.sender_id].append({"role": "assistant", "content": explanation})
-        
-        if file_path:
-            try:
-                os.remove(file_path)
-                print(f"Deleted image: {file_path}")
-            except Exception as e:
-                print(f"Failed to delete image: {e}")
+        chats_history[sender_id].append({"role": "assistant", "content": explanation})
 
     except openai._exceptions.RateLimitError:
         print("Quota limit exceeded or rate limit error")
@@ -115,48 +144,6 @@ async def handle_private_message(event):
     except Exception as e:
         print(f"An error occurred: {e}")
         return ""
-    
-def resize_image(image, max_dimension):
-    width, height = image.size
-
-    if image.mode == "P":
-        if "transparency" in image.info:
-            image = image.convert("RGBA")
-        else:
-            image = image.convert("RGB")
-
-    if width > max_dimension or height > max_dimension:
-        if width > height:
-            new_width = max_dimension
-            new_height = int(height * (max_dimension / width))
-        else:
-            new_height = max_dimension
-            new_width = int(width * (max_dimension / height))
-        image = image.resize((new_width, new_height), Image.LANCZOS)
-        
-        timestamp = time.time()
-
-    return image
-
-def convert_to_png(image):
-    with io.BytesIO() as output:
-        image.save(output, format="PNG")
-        return output.getvalue()
-    
-def process_image(path, max_size = 1024):
-    with Image.open(path) as image:
-        width, height = image.size
-        mimetype = image.get_format_mimetype()
-        if mimetype == "image/png" and width <= max_size and height <= max_size:
-            with open(path, "rb") as f:
-                encoded_image = base64.b64encode(f.read()).decode('utf-8')
-                return (encoded_image, max(width, height))
-        else:
-            resized_image = resize_image(image, max_size)
-            png_image = convert_to_png(resized_image)
-            return (base64.b64encode(png_image).decode('utf-8'),
-                    max(width, height)
-                   )  
     
 def check_mention(me, event):
     mention = event.is_reply or (f"@{me.username}" in event.text) or chats_history[event.sender_id][-2].get("role") == "assistant"
