@@ -162,6 +162,7 @@ async def check_active_sessions():
         last_active = datetime.utcfromtimestamp(session.date_active)
 
         if now - last_active < active_threshold:
+            print("User is online - dont answer")
             return True
 
     return False
