@@ -4,6 +4,7 @@ import os
 import random
 import ffmpeg
 from PIL import Image
+from datetime import datetime, timedelta
 import openai
 from openai import AsyncOpenAI
 from telethon import TelegramClient, events
@@ -66,7 +67,7 @@ async def handle_private_message(event):
     if event.is_group and not check_mention(me, sender_id, event):
         return
 
-    if not reply_enabled or not check_active_sessions():
+    if not reply_enabled or not await check_active_sessions():
         return
 
     try:
@@ -153,10 +154,16 @@ def check_mention(me, sender_id, event):
 async def check_active_sessions():
     global client
     auths = await client(GetAuthorizationsRequest())
-    if len(auths.authorizations) > 1:
-        return True
-    else:
-        return False
+
+    now = datetime.utcnow()
+    active_threshold = timedelta(minutes=1)
+
+    for session in auths.authorizations:
+        last_active = datetime.utcfromtimestamp(session.date_active)
+        if now - last_active < active_threshold:
+            return True
+
+    return False
     
 def main():
     print("🤖 Bot is running...")
