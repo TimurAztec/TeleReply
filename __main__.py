@@ -9,6 +9,7 @@ from openai import AsyncOpenAI
 from telethon import TelegramClient, events
 from collections import defaultdict
 from dotenv import load_dotenv
+from telethon.tl.functions.account import GetAuthorizationsRequest
 
 load_dotenv()
 API_ID = os.getenv("TELEGRAM_API_ID")
@@ -17,7 +18,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ALLOWED_GROUP_IDS = os.getenv("GROUP_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
 
-client = TelegramClient("session", API_ID, API_HASH)
+client = TelegramClient("session", int(API_ID), API_HASH)
 openai_client = AsyncOpenAI(
   api_key=OPENAI_API_KEY
 )
@@ -65,7 +66,7 @@ async def handle_private_message(event):
     if event.is_group and not check_mention(me, sender_id, event):
         return
 
-    if not reply_enabled:
+    if not reply_enabled or not check_active_sessions():
         return
 
     try:
@@ -148,6 +149,14 @@ async def handle_private_message(event):
 def check_mention(me, sender_id, event):
     mention = event.is_reply or (f"@{me.username}" in event.text) or chats_history[sender_id][-2].get("role") == "assistant"
     return mention
+
+async def check_active_sessions():
+    global client
+    auths = await client(GetAuthorizationsRequest())
+    if len(auths.authorizations) > 1:
+        return True
+    else:
+        return False
     
 def main():
     print("🤖 Bot is running...")
