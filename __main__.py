@@ -162,6 +162,7 @@ async def check_active_sessions():
         last_active = session.date_active.replace(tzinfo=None)
 
         if now - last_active < active_threshold:
+            print("User is online - no response")
             return True
 
     return False
