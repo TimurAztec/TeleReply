@@ -62,7 +62,7 @@ async def handle_private_message(event):
 
     chats_history[sender_id].append({"role": "user", "content": event.text})
     
-    if event.is_group and not check_mention(me, event):
+    if event.is_group and not check_mention(me, sender_id, event):
         return
 
     if not reply_enabled:
@@ -145,8 +145,8 @@ async def handle_private_message(event):
         print(f"An error occurred: {e}")
         return ""
     
-def check_mention(me, event):
-    mention = event.is_reply or (f"@{me.username}" in event.text) or chats_history[event.sender_id][-2].get("role") == "assistant"
+def check_mention(me, sender_id, event):
+    mention = event.is_reply or (f"@{me.username}" in event.text) or chats_history[sender_id][-2].get("role") == "assistant"
     return mention
     
 def main():
