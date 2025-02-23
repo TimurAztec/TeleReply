@@ -159,10 +159,9 @@ async def check_active_sessions():
     active_threshold = timedelta(minutes=1)
 
     for session in auths.authorizations:
-        last_active = datetime.utcfromtimestamp(session.date_active)
+        last_active = session.date_active
 
         if now - last_active < active_threshold:
-            print("User is online - dont answer")
             return True
 
     return False
