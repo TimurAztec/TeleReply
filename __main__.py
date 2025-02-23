@@ -155,11 +155,11 @@ async def check_active_sessions():
     global client
     auths = await client(GetAuthorizationsRequest())
 
-    now = datetime.utcnow()
+    now = datetime.utcnow().replace(tzinfo=None)
     active_threshold = timedelta(minutes=1)
 
     for session in auths.authorizations:
-        last_active = session.date_active
+        last_active = session.date_active.replace(tzinfo=None)
 
         if now - last_active < active_threshold:
             return True
