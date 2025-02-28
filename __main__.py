@@ -1,9 +1,9 @@
 import base64
 import io
 import os
+import re
 import random
 import ffmpeg
-import whisper
 from PIL import Image
 from datetime import datetime, timedelta
 import openai
@@ -15,6 +15,11 @@ from dotenv import load_dotenv
 from telethon.tl.functions.account import GetAuthorizationsRequest
 from telethon.tl.functions.messages import SetTypingRequest
 from telethon.tl.types import SendMessageTypingAction
+
+try:
+    import whisper
+except ImportError as e:
+    print("Could not import whisper module!")
 
 load_dotenv()
 API_ID = os.getenv("TELEGRAM_API_ID")
@@ -32,13 +37,18 @@ reply_enabled = True
 busy_replying = defaultdict(lambda: False)
 chats_history = defaultdict(list)
 
-NUM_PREVIOUS_MESSAGES = 11
+NUM_PREVIOUS_MESSAGES = 6
 TYPING_SPEED = 11
+temperature=1
+presence_penalty=0.77
+frequency_penalty=0.11
+top_p=0.55
 
 @client.on(events.NewMessage(incoming=False))
 async def toggle_reply(event):
     global reply_enabled
     me = await client.get_me()
+    sender_id = event.chat_id if event.is_group else event.sender_id
     print(f"Out | Chat id: {event.chat_id} | Text: {event.text}")
     if event.chat_id == me.id:
         if event.text.lower() == "reply-on" and not reply_enabled:
@@ -54,18 +64,22 @@ async def toggle_reply(event):
         elif event.text.lower() == "reply-remove" and str(event.chat_id) in CHAT_WHITE_LIST:
             CHAT_WHITE_LIST.remove(str(event.chat_id))
             print(f"Chat removed: {event.chat_id}")
+        else:
+            if event.text:
+                chats_history[sender_id].append({"role": "assistant", "content": event.text})
 
 @client.on(events.NewMessage(incoming=True))
 async def handle_private_message(event):
-    global reply_enabled, busy_replying
+    global reply_enabled, busy_replying, temperature, frequency_penalty, presence_penalty, top_p
     me = await client.get_me()
+    sender = await event.get_sender()
     print(f"Incoming | Chat id: {event.chat_id} | Text: {event.text}")
     
     if str(event.chat_id) not in CHAT_WHITE_LIST or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document or event.voice)):
+    # if str(event.chat_id) not in CHAT_WHITE_LIST or (event.text == '' and not (event.photo or event.document or event.voice)):
         return
     
     sender_id = event.chat_id if event.is_group else event.sender_id
-
     if not chats_history[sender_id]:
         previous_messages = await client.get_messages(event.chat_id, limit=NUM_PREVIOUS_MESSAGES)
         
@@ -75,7 +89,7 @@ async def handle_private_message(event):
             if msg.from_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
     
-    if (event.is_group and not check_mention(me, sender_id, event)) or busy_replying[sender_id]:
+    if (event.is_group and not await check_mention(me, sender_id, event)) or busy_replying[sender_id]:
         return
 
     active = await check_active_sessions()
@@ -90,86 +104,55 @@ async def handle_private_message(event):
         }
         history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
         history.insert(0, system_message)
+        content_list = []
 
         if event.text:
-            history.append({"role": "user", "content": event.text})
+            content = f'{sender.username}: {event.text}' if sender.username else event.text
+            content_list.append(content)
 
         image_base64 = None
-        if event.photo or event.document:
-            print(f"Document type: {event.document.mime_type}")
-            if event.document and event.document.mime_type == "image/gif":
+
+        if event.document:
+            mime_type = event.document.mime_type
+            print(f"Document: {mime_type}")
+
+            if mime_type in ["image/gif", "image/webp", "application/x-tgsticker"]:
                 blob = await event.download_media(bytes)
-                image = Image.open(io.BytesIO(blob))
-                image = image.convert("RGB")
-                buffer = io.BytesIO()
-                image.save(buffer, format="JPEG")
-                image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-            elif event.document and event.document.mime_type == "video/webm":
+                image_base64 = await convert_to_jpeg(blob)
+
+            elif mime_type in ["video/webm", "video/mp4"]:
                 blob = await event.download_media(bytes)
                 out, _ = (
                     ffmpeg.input("pipe:0")
                     .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
                     .run(input=blob, capture_stdout=True, capture_stderr=True)
                 )
-                image = Image.open(io.BytesIO(out))
-                image = image.convert("RGB")
-                buffer = io.BytesIO()
-                image.save(buffer, format="JPEG")
-                image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-            elif event.document and event.document.mime_type == "video/mp4":
-                blob = await event.download_media(bytes)
-                out, _ = (
-                    ffmpeg.input("pipe:0")
-                    .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
-                    .run(input=blob, capture_stdout=True, capture_stderr=True)
-                )
-                image = Image.open(io.BytesIO(out))
-                image = image.convert("RGB")
+                print(_)
+                image_base64 = await convert_to_jpeg(out)
 
-                buffer = io.BytesIO()
-                image.save(buffer, format="JPEG")
-                image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-            elif event.document and event.document.mime_type == "audio/ogg":
-                audio_file = await event.download_media()
+            elif mime_type == "audio/ogg":
+                if whisper:
+                    audio_file = await event.download_media()
+                    model = whisper.load_model("base")
+                    transcribed_text = model.transcribe(audio_file)
+                    print(f"Audio transcription: {transcribed_text.get('text')}")
+                    history.append({"role": "user", "content": transcribed_text.get('text')})
+                    os.remove(audio_file)
 
-                model = whisper.load_model("base")
-                transcribed_text = model.transcribe(audio_file)
-                print(f"Audio transcription: {transcribed_text.get('text')}")
-                history.append({"role": "user", "content": transcribed_text.get('text')})
-                os.remove(audio_file)
             else:
                 blob = await event.download_media(bytes)
                 image_base64 = base64.b64encode(blob).decode("utf-8")
 
-            if image_base64:
-                history.append({
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url",
-                         "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}}
-                    ]
-                })
+        if image_base64:
+            content_list.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}
+            })
 
-        response = await openai_client.chat.completions.create(
-            model="gpt-4",
-            messages=history,
-            max_tokens=round(random.uniform(100, 333)),
-            temperature=random.uniform(0.5, 1),
-            presence_penalty=-1.5,
-            frequency_penalty=0.0
-        )
-        
-        explanation = response.choices[0].message.content.strip()
-        # print(response.choices[0])
-        # stop_flag = response.choices[0].get("stop_conversation", False)
+        if content_list:
+            history.append({"role": "user", "content": content_list})
 
-        # if stop_flag:
-        #     raise ValueError(f"Conversation with {sender_id} is over.")
-
-        await simulate_typing(event, explanation)
-        await event.reply(explanation) if event.is_group else await event.respond(explanation)
-
-        chats_history[sender_id].append({"role": "assistant", "content": explanation})
+        await respond(first_msg=True, event=event, history=history)
 
     except openai._exceptions.RateLimitError:
         print("Quota limit exceeded or rate limit error")
@@ -180,20 +163,87 @@ async def handle_private_message(event):
     finally:
         busy_replying[sender_id] = False
 
+async def convert_to_jpeg(blob):
+    image = Image.open(io.BytesIO(blob))
+    image = image.convert("RGB")
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG")
+    return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+async def generate_response(history):
+    last_message = history[-1] if history else None
+    has_image = last_message and isinstance(last_message.get("content"), list) and any(
+        msg.get("type") == "image_url" for msg in last_message["content"]
+    )
+
+    model_name = "gpt-4o-mini-2024-07-18" if has_image else "ft:gpt-4o-mini-2024-07-18:personal:timur:B5ggtFeK"
+
+    response = await openai_client.chat.completions.create(
+        model=model_name,
+        messages=history,
+        max_tokens=222,
+        temperature=temperature,
+        presence_penalty=presence_penalty,
+        frequency_penalty=frequency_penalty,
+        top_p=top_p
+    )
+
+    response_text = response.choices[0].message.content.strip()
+
+    if re.search(r"https?://\S+|www\.\S+", response_text):
+        print(f"Link detected in response, regenerating: {response_text}")
+        await asyncio.sleep(0.5)
+        return await generate_response(history)
+    else:
+        return response_text
+
+
+async def respond(first_msg: bool, event, history):
+    response_text = await generate_response(history)
+
+    if "/stop-conversation" in response_text:
+        raise ValueError("Conversation is over.")
+
+    next_msg = False
+    if "/next-msg" in response_text:
+        next_msg = True
+        response_text = response_text.replace("/next-msg", "").strip()
+
+    await simulate_typing(event, response_text or '')
+    await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
+
+    if next_msg:
+        history.append({"role": "assistant", "content": event.text})
+        await respond(False, event, history)
+
 async def simulate_typing(event, text):
     chat_id = event.chat_id
     try:
-        await asyncio.sleep(round(random.uniform(0.5, 5)))
+        await asyncio.sleep(round(random.uniform(0.1, 5)))
         await client(SetTypingRequest(chat_id, SendMessageTypingAction()))
         typing_time = round(len(text) / TYPING_SPEED)
         print(f"Typing for: {typing_time}")
         await asyncio.sleep(typing_time)
     except Exception as e:
         print(f"Error while sending typing action: {e}")
-    
-def check_mention(me, sender_id, event):
-    mention = event.is_reply or (f"@{me.username}" in event.text) or chats_history[sender_id][-2].get("role") == "assistant"
-    return mention
+
+
+async def check_mention(me, sender_id, event):
+    if event.is_reply:
+        msg = await event.get_reply_message()
+        if msg.from_id == me.id:
+            return True
+
+    if f"@{me.username}" in event.text:
+        return True
+
+    if chats_history.get(sender_id) and len(chats_history[sender_id]) > 2:
+        last_msg = chats_history[sender_id][-2]
+
+        if last_msg.get("role") == "assistant" and not event.is_reply:
+            return True
+
+    return False
 
 async def check_active_sessions():
     global client
