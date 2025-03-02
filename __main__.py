@@ -40,8 +40,8 @@ chats_history = defaultdict(list)
 NUM_PREVIOUS_MESSAGES = 5
 TYPING_SPEED = 11
 temperature=1
-presence_penalty=-0.77
-frequency_penalty=0.11
+presence_penalty=0.11
+frequency_penalty=0.99
 top_p=0.55
 
 @client.on(events.NewMessage(incoming=False))
@@ -81,7 +81,7 @@ async def handle_private_message(event):
     
     sender_id = event.chat_id if event.is_group else event.sender_id
     if not chats_history[sender_id]:
-        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES/2))
+        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
         
         for msg in previous_messages:
             if msg.from_id != me.id:
@@ -197,7 +197,7 @@ async def generate_response(history):
 
     response_text = response.choices[0].message.content.strip()
 
-    if re.search(r"https?://\S+|www\.\S+", response_text):
+    if re.search(r"https?://\S+|www\.\S+", response_text) or "@TimurWasHere" in response_text:
         print(f"Link detected in response, regenerating: {response_text}")
         await asyncio.sleep(0.5)
         return await generate_response(history)
