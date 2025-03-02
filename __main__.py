@@ -81,7 +81,7 @@ async def handle_private_message(event):
     
     sender_id = event.chat_id if event.is_group else event.sender_id
     if not chats_history[sender_id]:
-        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
+        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES * 2))
         
         for msg in previous_messages:
             if msg.from_id != me.id:
@@ -106,6 +106,7 @@ async def handle_private_message(event):
             "content": SYS_PROMPT
         }
         history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
+        await summarize_history(sender_id)
         history.insert(0, system_message)
         content_list = []
 
@@ -164,6 +165,35 @@ async def handle_private_message(event):
         return
     finally:
         busy_replying[sender_id] = False
+
+
+async def summarize_history(sender_id):
+    if len(chats_history[sender_id]) < NUM_PREVIOUS_MESSAGES:
+        return
+
+    summary_prompt = {
+        "role": "system",
+        "content": "Summarize this conversation while keeping key details relevant to the discussion."
+    }
+
+    history_text = "\n".join([msg["content"] if isinstance(msg["content"], str) else str(msg["content"])
+                              for msg in chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]])
+
+    try:
+        response = await openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[summary_prompt, {"role": "user", "content": history_text}],
+            max_tokens=200,
+            temperature=0.33
+        )
+        summary = response.choices[0].message.content.strip()
+        print(f"History summary: {summary}")
+        chats_history[sender_id] = [{"role": "system", "content": "Previous conversation Summary: " + summary}]
+
+    except openai._exceptions.RateLimitError:
+        print("Rate limit exceeded, skipping history summarization.")
+    except Exception as e:
+        print(f"Error summarizing history: {e}")
 
 async def convert_to_jpeg(blob):
     image = Image.open(io.BytesIO(blob))
@@ -225,7 +255,6 @@ async def respond(first_msg: bool, event, history):
 async def simulate_typing(event, text):
     chat_id = event.chat_id
     try:
-        await asyncio.sleep(round(random.uniform(0.1, 5)))
         await client(SetTypingRequest(chat_id, SendMessageTypingAction()))
         typing_time = round(len(text) / TYPING_SPEED)
         print(f"Typing for: {typing_time}")
