@@ -37,10 +37,10 @@ reply_enabled = True
 busy_replying = defaultdict(lambda: False)
 chats_history = defaultdict(list)
 
-NUM_PREVIOUS_MESSAGES = 6
+NUM_PREVIOUS_MESSAGES = 5
 TYPING_SPEED = 11
 temperature=1
-presence_penalty=0.77
+presence_penalty=-0.77
 frequency_penalty=0.11
 top_p=0.55
 
@@ -81,15 +81,18 @@ async def handle_private_message(event):
     
     sender_id = event.chat_id if event.is_group else event.sender_id
     if not chats_history[sender_id]:
-        previous_messages = await client.get_messages(event.chat_id, limit=NUM_PREVIOUS_MESSAGES)
+        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES/2))
         
         for msg in previous_messages:
             if msg.from_id != me.id:
                 chats_history[sender_id].append({"role": "user", "content": msg.text})
             if msg.from_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
-    
-    if (event.is_group and not await check_mention(me, sender_id, event)) or busy_replying[sender_id]:
+
+    mention = await check_mention(me, sender_id, event)
+    print(f"Mentioned: {mention}")
+    if (event.is_group and not mention) or busy_replying[sender_id]:
+        print(f"Not mentioned or busy")
         return
 
     active = await check_active_sessions()
@@ -107,8 +110,7 @@ async def handle_private_message(event):
         content_list = []
 
         if event.text:
-            content = f'{sender.username}: {event.text}' if sender.username else event.text
-            content_list.append(content)
+            content_list.append({"type": "text", "text": f'{sender.username}: {event.text}' if sender.username else event.text})
 
         image_base64 = None
 
@@ -172,11 +174,16 @@ async def convert_to_jpeg(blob):
 
 async def generate_response(history):
     last_message = history[-1] if history else None
-    has_image = last_message and isinstance(last_message.get("content"), list) and any(
-        msg.get("type") == "image_url" for msg in last_message["content"]
-    )
 
-    model_name = "gpt-4o-mini-2024-07-18" if has_image else "ft:gpt-4o-mini-2024-07-18:personal:timur:B5ggtFeK"
+    if last_message and isinstance(last_message.get("content"), list):
+        has_non_text = any(
+            not isinstance(msg, str) or (isinstance(msg, dict) and msg.get("type") == "image_url")
+            for msg in last_message["content"]
+        )
+    else:
+        has_non_text = False
+
+    model_name = "gpt-4o-mini-2024-07-18" if has_non_text else "ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOYAO"
 
     response = await openai_client.chat.completions.create(
         model=model_name,
@@ -196,7 +203,6 @@ async def generate_response(history):
         return await generate_response(history)
     else:
         return response_text
-
 
 async def respond(first_msg: bool, event, history):
     response_text = await generate_response(history)
