@@ -29,6 +29,7 @@ CHAT_WHITE_LIST = os.getenv("CHAT_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
 
 client = TelegramClient("session", int(API_ID), API_HASH)
+me = None
 openai_client = AsyncOpenAI(
   api_key=OPENAI_API_KEY
 )
@@ -39,15 +40,14 @@ chats_history = defaultdict(list)
 
 NUM_PREVIOUS_MESSAGES = 5
 TYPING_SPEED = 11
-temperature=1
+temperature=0.88
 presence_penalty=0.11
-frequency_penalty=0.99
-top_p=0.55
+frequency_penalty=1
+top_p=0.5
 
 @client.on(events.NewMessage(incoming=False))
 async def toggle_reply(event):
-    global reply_enabled
-    me = await client.get_me()
+    global reply_enabled, me
     sender_id = event.chat_id if event.is_group else event.sender_id
     print(f"Out | Chat id: {event.chat_id} | Text: {event.text}")
     if event.chat_id == me.id:
@@ -70,8 +70,7 @@ async def toggle_reply(event):
 
 @client.on(events.NewMessage(incoming=True))
 async def handle_private_message(event):
-    global reply_enabled, busy_replying, temperature, frequency_penalty, presence_penalty, top_p
-    me = await client.get_me()
+    global me, reply_enabled, busy_replying, temperature, frequency_penalty, presence_penalty, top_p
     sender = await event.get_sender()
     print(f"Incoming | Chat id: {event.chat_id} | Text: {event.text}")
     
@@ -99,6 +98,7 @@ async def handle_private_message(event):
     if not reply_enabled or active:
         return
 
+    await event.mark_read()
     busy_replying[sender_id] = True
     try:
         system_message = {
@@ -125,13 +125,15 @@ async def handle_private_message(event):
 
             elif mime_type in ["video/webm", "video/mp4"]:
                 blob = await event.download_media(bytes)
-                out, _ = (
-                    ffmpeg.input("pipe:0")
+                out, err = (
+                    ffmpeg.input("pipe:0", format="mp4")  # Specify format
                     .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
                     .run(input=blob, capture_stdout=True, capture_stderr=True)
                 )
-                print(_)
-                image_base64 = await convert_to_jpeg(out)
+                if err:
+                    print("FFmpeg error:", err)
+
+                image_base64 = base64.b64encode(out).decode("utf-8")
 
             elif mime_type == "audio/ogg":
                 if whisper:
@@ -176,8 +178,11 @@ async def summarize_history(sender_id):
         "content": "Summarize this conversation while keeping key details relevant to the discussion."
     }
 
-    history_text = "\n".join([msg["content"] if isinstance(msg["content"], str) else str(msg["content"])
-                              for msg in chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]])
+    history_text = "\n".join([
+        f'{msg["role"].capitalize()}: {msg["content"]}' if isinstance(msg["content"], str)
+        else f'{msg["role"].capitalize()}: {str(msg["content"])}'
+        for msg in chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
+    ])
 
     try:
         response = await openai_client.chat.completions.create(
@@ -266,6 +271,7 @@ async def simulate_typing(event, text):
 async def check_mention(me, sender_id, event):
     if event.is_reply:
         msg = await event.get_reply_message()
+        print(f"Check reply: from {msg.from_id} | content: {msg.text}")
         if msg.from_id == me.id:
             return True
 
@@ -298,11 +304,17 @@ async def check_active_sessions():
             return True
 
     return False
-    
-def main():
+
+async def init():
+    global me
+    me = await client.get_me()
+    print(f"🤖 Bot init as: {me.username} | {me.id}")
+
+async def main():
+    await init()
     print("🤖 Bot is running...")
-    client.start()
-    client.run_until_disconnected()
+    await client.run_until_disconnected()
 
 if __name__ == "__main__":
-    main()
+    with client:
+        client.loop.run_until_complete(main())
