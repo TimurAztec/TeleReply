@@ -83,9 +83,9 @@ async def handle_private_message(event):
         previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES * 2))
         
         for msg in previous_messages:
-            if msg.from_id != me.id:
+            if msg.from_id.user_id != me.id:
                 chats_history[sender_id].append({"role": "user", "content": msg.text})
-            if msg.from_id == me.id:
+            if msg.from_id.user_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
 
     mention = await check_mention(me, sender_id, event)
@@ -232,8 +232,9 @@ async def generate_response(history):
 
     response_text = response.choices[0].message.content.strip()
 
-    if re.search(r"https?://\S+|www\.\S+", response_text) or "@TimurWasHere" in response_text:
-        print(f"Link detected in response, regenerating: {response_text}")
+    print(f'Last symbol {response_text[-1]}')
+    if re.search(r"https?://\S+|www\.\S+", response_text) or "@TimurWasHere" in response_text or response_text[-1] == '😂':
+        print(f"Artefact detected in response, regenerating: {response_text}")
         await asyncio.sleep(0.5)
         return await generate_response(history)
     else:
@@ -271,15 +272,17 @@ async def simulate_typing(event, text):
 async def check_mention(me, sender_id, event):
     if event.is_reply:
         msg = await event.get_reply_message()
-        print(f"Check reply: from {msg.from_id} | content: {msg.text}")
-        if msg.from_id == me.id:
+        if msg.from_id.user_id == me.id:
             return True
 
     if f"@{me.username}" in event.text:
         return True
 
+    print(f"{chats_history.get(sender_id)} | {len(chats_history[sender_id])}")
     if chats_history.get(sender_id) and len(chats_history[sender_id]) > 2:
         last_msg = chats_history[sender_id][-2]
+        print(chats_history[sender_id])
+        print(f"\nNo reply, replied msg: {last_msg}\n")
 
         if last_msg.get("role") == "assistant" and not event.is_reply:
             return True
