@@ -110,8 +110,9 @@ async def handle_private_message(event):
         history.insert(0, system_message)
         content_list = []
 
+        username = await get_display_name(sender)
         if event.text:
-            content_list.append({"type": "text", "text": f'{sender.username}: {event.text}' if sender.username else event.text})
+            content_list.append({"type": "text", "text": f'{sender.username} says: {event.text}' if username else event.text})
 
         image_base64 = None
 
@@ -239,6 +240,17 @@ async def generate_response(history):
         return await generate_response(history)
     else:
         return response_text
+
+
+async def get_display_name(sender):
+    if sender.first_name:
+        return sender.first_name + (" " + sender.last_name if sender.last_name else "")
+    elif sender.last_name:
+        return sender.last_name
+    elif sender.username:
+        return sender.username
+    else:
+        return ""
 
 async def respond(first_msg: bool, event, history):
     response_text = await generate_response(history)
