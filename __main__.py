@@ -215,6 +215,9 @@ async def handle_message(event):
                     print(f"Audio transcription: {transcribed_text.get('text')}")
                     history.append({"role": "user", "content": transcribed_text.get('text')})
                     os.remove(audio_file)
+                else:
+                    content_list.append(
+                        {"type": "text", "text": "*User attached voice message, but you cant listen to it at the moment*"})
 
             else:
                 blob = await event.download_media(bytes)
