@@ -21,9 +21,10 @@ from telethon.tl.types import SendMessageTypingAction, SendMessageRecordAudioAct
 
 from youtube import extract_youtube_video_id, get_youtube_video_title, summarize_youtube_transcript, \
     get_youtube_transcript
-
+whisper = None
 try:
     import whisper
+    whisper = whisper
 except ImportError as e:
     print("Could not import whisper module!")
 
