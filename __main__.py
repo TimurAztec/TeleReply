@@ -343,11 +343,11 @@ async def respond(first_msg: bool, event, history):
         await respond(True, event, history)
         return
 
-    if not whisper or random.choice([True, True, False, True, True]):
+    if whisper and random.choice([True, True, False, True, True]):
+        await respond_voice(event, response_text)
+    else:
         await simulate_typing(event, response_text or '')
         await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
-    else:
-        await respond_voice(event, response_text)
 
     if next_msg:
         history.append({"role": "assistant", "content": event.text})
