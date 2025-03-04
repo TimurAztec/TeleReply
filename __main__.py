@@ -343,7 +343,7 @@ async def respond(first_msg: bool, event, history):
         await respond(True, event, history)
         return
 
-    if tokens_count < 300 and random.choice([True, True, False, True, True]):
+    if not whisper or random.choice([True, True, False, True, True]):
         await simulate_typing(event, response_text or '')
         await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
     else:
