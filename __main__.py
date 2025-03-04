@@ -3,7 +3,10 @@ import io
 import os
 import re
 import random
+import subprocess
+
 import ffmpeg
+import tiktoken
 from PIL import Image
 from datetime import datetime, timedelta
 import openai
@@ -14,7 +17,10 @@ from collections import defaultdict
 from dotenv import load_dotenv
 from telethon.tl.functions.account import GetAuthorizationsRequest
 from telethon.tl.functions.messages import SetTypingRequest
-from telethon.tl.types import SendMessageTypingAction
+from telethon.tl.types import SendMessageTypingAction, SendMessageRecordAudioAction, DocumentAttributeAudio
+
+from youtube import extract_youtube_video_id, get_youtube_video_title, summarize_youtube_transcript, \
+    get_youtube_transcript
 
 try:
     import whisper
@@ -39,11 +45,13 @@ busy_replying = defaultdict(lambda: False)
 chats_history = defaultdict(list)
 
 NUM_PREVIOUS_MESSAGES = 5
-TYPING_SPEED = 11
+TYPING_SPEED = 10
+SPEECH_SPEED = 15
 temperature=0.88
-presence_penalty=0.11
+presence_penalty=0.33
 frequency_penalty=1
 top_p=0.5
+model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
 
 @client.on(events.NewMessage(incoming=False))
 async def toggle_reply(event):
@@ -68,24 +76,81 @@ async def toggle_reply(event):
             if event.text:
                 chats_history[sender_id].append({"role": "assistant", "content": event.text})
 
+        if "@TimurWasHere" in event.text:
+            await handle_message(event)
+
+async def respond_voice(event, text):
+    user_id = event.chat_id
+
+    await simulate_voice_recording(event, text)
+
+    response = openai.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=text
+    )
+
+    raw_audio = io.BytesIO(response.content)
+    raw_audio.seek(0)
+
+    converted_audio = io.BytesIO()
+
+    process = subprocess.run(
+        [
+            "ffmpeg", "-y", "-i", "pipe:0",
+            "-c:a", "libopus", "-b:a", "32k", "-vn",
+            "-f", "ogg", "pipe:1"
+        ],
+        input=raw_audio.read(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    if process.returncode != 0:
+        print("FFmpeg error:", process.stderr.decode())
+        return
+
+    converted_audio.write(process.stdout)
+    converted_audio.seek(0)
+    converted_audio.name = "voice.ogg"
+
+    if converted_audio.getbuffer().nbytes == 0:
+        print("Converted audio file is empty!")
+        return
+
+    duration = round(len(text) / SPEECH_SPEED)
+
+    await client.send_file(
+        user_id,
+        converted_audio,
+        voice_note=True,
+        reply_to=event.message,
+        attributes=[DocumentAttributeAudio(duration=int(duration), voice=True)]
+    )
+
 @client.on(events.NewMessage(incoming=True))
 async def handle_private_message(event):
-    global me, reply_enabled, busy_replying, temperature, frequency_penalty, presence_penalty, top_p
-    sender = await event.get_sender()
     print(f"Incoming | Chat id: {event.chat_id} | Text: {event.text}")
     
-    if str(event.chat_id) not in CHAT_WHITE_LIST or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document or event.voice)):
-    # if str(event.chat_id) not in CHAT_WHITE_LIST or (event.text == '' and not (event.photo or event.document or event.voice)):
+    # if str(event.chat_id) not in CHAT_WHITE_LIST or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document or event.voice)):
+    if str(event.chat_id) not in CHAT_WHITE_LIST or (event.text == '' and not (event.photo or event.document or event.voice)):
         return
-    
+
+    await handle_message(event)
+
+
+async def handle_message(event):
+    global me, reply_enabled, busy_replying, temperature, frequency_penalty, presence_penalty, top_p
+    sender = await event.get_sender()
+
     sender_id = event.chat_id if event.is_group else event.sender_id
     if not chats_history[sender_id]:
         previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES * 2))
-        
+
         for msg in previous_messages:
-            if msg.from_id.user_id != me.id:
+            if msg.from_id and msg.from_id.user_id != me.id:
                 chats_history[sender_id].append({"role": "user", "content": msg.text})
-            if msg.from_id.user_id == me.id:
+            if msg.from_id and msg.from_id.user_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
 
     mention = await check_mention(me, sender_id, event)
@@ -112,7 +177,13 @@ async def handle_private_message(event):
 
         username = await get_display_name(sender)
         if event.text:
-            content_list.append({"type": "text", "text": f'{sender.username} says: {event.text}' if username else event.text})
+            text = event.text
+            youtube_id = extract_youtube_video_id(event.text)
+            if youtube_id:
+                youtube_title = get_youtube_video_title(youtube_id)
+                youtube_summary = get_youtube_transcript(youtube_id)
+                text += f"\n User attached video titled {youtube_title}: {youtube_summary}"
+            content_list.append({"type": "text", "text": f'{sender.username} says: {text}' if username else text})
 
         image_base64 = None
 
@@ -169,7 +240,6 @@ async def handle_private_message(event):
     finally:
         busy_replying[sender_id] = False
 
-
 async def summarize_history(sender_id):
     if len(chats_history[sender_id]) < NUM_PREVIOUS_MESSAGES:
         return
@@ -209,17 +279,19 @@ async def convert_to_jpeg(blob):
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 async def generate_response(history):
+    global model_id
     last_message = history[-1] if history else None
 
     if last_message and isinstance(last_message.get("content"), list):
         has_non_text = any(
-            not isinstance(msg, str) or (isinstance(msg, dict) and msg.get("type") == "image_url")
+            (isinstance(msg, dict) and msg.get("type") == "image_url")
             for msg in last_message["content"]
         )
     else:
         has_non_text = False
 
-    model_name = "gpt-4o-mini-2024-07-18" if has_non_text else "ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOYAO"
+    print(f"has non text: {has_non_text}")
+    model_name = "gpt-4o-mini-2024-07-18" if has_non_text else model_id
 
     response = await openai_client.chat.completions.create(
         model=model_name,
@@ -234,7 +306,7 @@ async def generate_response(history):
     response_text = response.choices[0].message.content.strip()
 
     print(f'Last symbol {response_text[-1]}')
-    if re.search(r"https?://\S+|www\.\S+", response_text) or "@TimurWasHere" in response_text or response_text[-1] == '😂':
+    if re.search(r"https?://\S+|www\.\S+", response_text) or "@TimurWasHere" in response_text or response_text[-1] == '😂' or response_text[-1] == '😏':
         print(f"Artefact detected in response, regenerating: {response_text}")
         await asyncio.sleep(0.5)
         return await generate_response(history)
@@ -254,6 +326,7 @@ async def get_display_name(sender):
 
 async def respond(first_msg: bool, event, history):
     response_text = await generate_response(history)
+    tokens_count = count_tokens(response_text)
 
     if "/stop-conversation" in response_text:
         raise ValueError("Conversation is over.")
@@ -263,8 +336,15 @@ async def respond(first_msg: bool, event, history):
         next_msg = True
         response_text = response_text.replace("/next-msg", "").strip()
 
-    await simulate_typing(event, response_text or '')
-    await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
+    if next_msg or len(response_text) == 0:
+        await respond(True, event, history)
+        return
+
+    if tokens_count < 300 and random.choice([True, True, False, True, True]):
+        await simulate_typing(event, response_text or '')
+        await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
+    else:
+        await respond_voice(event, response_text)
 
     if next_msg:
         history.append({"role": "assistant", "content": event.text})
@@ -280,11 +360,21 @@ async def simulate_typing(event, text):
     except Exception as e:
         print(f"Error while sending typing action: {e}")
 
+async def simulate_voice_recording(event, text):
+    chat_id = event.chat_id
+    try:
+        await client(SetTypingRequest(chat_id, SendMessageRecordAudioAction()))
+        speech_time = round(len(text) / SPEECH_SPEED)
+        print(f"Voice recording for: {speech_time}")
+        await asyncio.sleep(speech_time)
+    except Exception as e:
+        print(f"Error while sending typing action: {e}")
+
 
 async def check_mention(me, sender_id, event):
     if event.is_reply:
         msg = await event.get_reply_message()
-        if msg.from_id.user_id == me.id:
+        if msg.from_id and msg.from_id.user_id == me.id:
             return True
 
     if f"@{me.username}" in event.text:
@@ -320,6 +410,11 @@ async def check_active_sessions():
 
     return False
 
+def count_tokens(text, model="gpt-4o-mini-2024-07-18"):
+    encoding = tiktoken.encoding_for_model(model)
+    tokens = encoding.encode(text)
+    return len(tokens)
+
 async def init():
     global me
     me = await client.get_me()
@@ -331,5 +426,7 @@ async def main():
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
+    # id = extract_youtube_video_id("https://www.youtube.com/watch?v=T23g5f6XmS8")
+    # print(id)
     with client:
         client.loop.run_until_complete(main())
