@@ -85,6 +85,11 @@ async def process_out_message(event):
             await event.reply(f"✅ {param_name} set to {param_value}")
             return
     elif event.chat_id != me.id:
+        if "@TimurWasHere" in event.text:
+            if str(event.chat_id) in CHAT_WHITE_LIST:
+                await handle_message(event)
+                return
+
         if event.text.lower() == "reply-add" and not str(event.chat_id) in CHAT_WHITE_LIST:
             CHAT_WHITE_LIST.append(str(event.chat_id))
             await event.reply(f"Chat added: {event.chat_id}")
@@ -94,10 +99,6 @@ async def process_out_message(event):
         else:
             if event.text:
                 chats_history[sender_id].append({"role": "assistant", "content": event.text})
-
-        if "@TimurWasHere" in event.text:
-            if str(event.chat_id) in CHAT_WHITE_LIST:
-                await handle_message(event)
 
 async def respond_voice(event, text):
     user_id = event.chat_id
