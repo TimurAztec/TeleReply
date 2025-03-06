@@ -55,7 +55,7 @@ top_p=0.5
 model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
 
 @client.on(events.NewMessage(incoming=False))
-async def toggle_reply(event):
+async def process_out_message(event):
     global reply_enabled, me, temperature, presence_penalty, frequency_penalty, top_p
     sender_id = event.chat_id if event.is_group else event.sender_id
     print(f"Out | Chat id: {event.chat_id} | Text: {event.text}")
@@ -96,7 +96,7 @@ async def toggle_reply(event):
                 chats_history[sender_id].append({"role": "assistant", "content": event.text})
 
         if "@TimurWasHere" in event.text:
-            if str(event.chat_id) not in CHAT_WHITE_LIST:
+            if str(event.chat_id) in CHAT_WHITE_LIST:
                 await handle_message(event)
 
 async def respond_voice(event, text):
@@ -149,7 +149,7 @@ async def respond_voice(event, text):
     )
 
 @client.on(events.NewMessage(incoming=True))
-async def handle_private_message(event):
+async def process_in_message(event):
     print(f"Incoming | Chat id: {event.chat_id} | Text: {event.text}")
     
     # if str(event.chat_id) not in CHAT_WHITE_LIST or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document or event.voice)):
@@ -363,6 +363,7 @@ async def respond(first_msg: bool, event, history):
         await respond(True, event, history)
         return
 
+    await asyncio.sleep(random.uniform(0, 5))
     if whisper and random.choice([True, True, False, True, True]):
         await respond_voice(event, response_text)
     else:
@@ -399,15 +400,20 @@ async def check_mention(me, sender_id, event):
         msg = await event.get_reply_message()
         if msg.from_id and msg.from_id.user_id == me.id:
             return True
+        if msg.from_id and msg.from_id.user_id == event.sender_id:
+            if msg.is_reply:
+                r_msg = await msg.get_reply_message()
+                if r_msg.from_id and r_msg.from_id.user_id == me.id:
+                    return True
+
+    if bool(re.search(r"@[\w]+", event.text)) and not f"@{me.username}" in event.text:
+        return False
 
     if f"@{me.username}" in event.text:
         return True
 
-    print(f"{chats_history.get(sender_id)} | {len(chats_history[sender_id])}")
     if chats_history.get(sender_id) and len(chats_history[sender_id]) > 2:
         last_msg = chats_history[sender_id][-2]
-        print(chats_history[sender_id])
-        print(f"\nNo reply, replied msg: {last_msg}\n")
 
         if last_msg.get("role") == "assistant" and not event.is_reply:
             return True
