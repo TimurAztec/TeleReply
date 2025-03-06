@@ -48,37 +48,56 @@ chats_history = defaultdict(list)
 NUM_PREVIOUS_MESSAGES = 5
 TYPING_SPEED = 10
 SPEECH_SPEED = 15
-temperature=0.85
-presence_penalty=0.44
+temperature=1
+presence_penalty=0.5
 frequency_penalty=1
 top_p=0.5
 model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
 
 @client.on(events.NewMessage(incoming=False))
 async def toggle_reply(event):
-    global reply_enabled, me
+    global reply_enabled, me, temperature, presence_penalty, frequency_penalty, top_p
     sender_id = event.chat_id if event.is_group else event.sender_id
     print(f"Out | Chat id: {event.chat_id} | Text: {event.text}")
     if event.chat_id == me.id:
         if event.text.lower() == "reply-on" and not reply_enabled:
             reply_enabled = True
-            await event.respond("✅ Auto-reply is ON.")
+            await event.reply("✅ Auto-reply is ON.")
         elif event.text.lower() == "reply-off" and reply_enabled:
             reply_enabled = False
-            await event.respond("❌ Auto-reply is OFF.")
+            await event.reply("❌ Auto-reply is OFF.")
+
+        param_match = re.match(r'set-(temperature|top_p|presence_penalty|frequency_penalty):\s*([0-9]*\.?[0-9]+)',
+                               event.text, re.IGNORECASE)
+        if param_match:
+            param_name = param_match.group(1)
+            param_value = float(param_match.group(2))
+
+            if param_name == "temperature":
+                temperature = param_value
+            elif param_name == "top_p":
+                top_p = param_value
+            elif param_name == "presence_penalty":
+                presence_penalty = param_value
+            elif param_name == "frequency_penalty":
+                frequency_penalty = param_value
+
+            await event.reply(f"✅ {param_name} set to {param_value}")
+            return
     elif event.chat_id != me.id:
         if event.text.lower() == "reply-add" and not str(event.chat_id) in CHAT_WHITE_LIST:
             CHAT_WHITE_LIST.append(str(event.chat_id))
-            print(f"Chat added: {event.chat_id}")
+            await event.reply(f"Chat added: {event.chat_id}")
         elif event.text.lower() == "reply-remove" and str(event.chat_id) in CHAT_WHITE_LIST:
             CHAT_WHITE_LIST.remove(str(event.chat_id))
-            print(f"Chat removed: {event.chat_id}")
+            await event.reply(f"Chat removed: {event.chat_id}")
         else:
             if event.text:
                 chats_history[sender_id].append({"role": "assistant", "content": event.text})
 
         if "@TimurWasHere" in event.text:
-            await handle_message(event)
+            if str(event.chat_id) not in CHAT_WHITE_LIST:
+                await handle_message(event)
 
 async def respond_voice(event, text):
     user_id = event.chat_id
