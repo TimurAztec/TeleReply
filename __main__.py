@@ -45,7 +45,7 @@ reply_enabled = True
 busy_replying = defaultdict(lambda: False)
 chats_history = defaultdict(list)
 
-NUM_PREVIOUS_MESSAGES = 5
+NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
 SPEECH_SPEED = 15
 temperature=1
@@ -166,7 +166,7 @@ async def handle_message(event):
 
     sender_id = event.chat_id if event.is_group else event.sender_id
     if not chats_history[sender_id]:
-        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES * 2))
+        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
         for msg in previous_messages:
             if msg.from_id and msg.from_id.user_id != me.id:
                 chats_history[sender_id].append({"role": "user", "content": msg.text})
