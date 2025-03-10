@@ -253,6 +253,8 @@ async def handle_message(event):
         if content_list:
             history.append({"role": "user", "content": content_list})
 
+        print(f"Context: {history}")
+
         await respond(first_msg=True, event=event, history=history)
 
     except openai._exceptions.RateLimitError:
@@ -307,18 +309,20 @@ async def generate_response(history):
     last_message = history[-1] if history else None
 
     if last_message and isinstance(last_message.get("content"), list):
-        has_non_text = any(
-            (isinstance(msg, dict) and msg.get("type") == "image_url")
+        has_image = any(
+            isinstance(msg, dict) and msg.get("type") == "image_url"
             for msg in last_message["content"]
         )
     else:
-        has_non_text = False
+        has_image = False
 
-    print(f"has non text: {has_non_text}")
-    model_name = "gpt-4o-mini-2024-07-18" if has_non_text else model_id
+    if has_image:
+        image_description = await describe_image(last_message["content"])
+        print(f"Image description: {image_description}")
+        history.append({"role": "user", "content": image_description})
 
     response = await openai_client.chat.completions.create(
-        model=model_name,
+        model=model_id,
         messages=history,
         max_tokens=222,
         temperature=temperature,
@@ -329,14 +333,22 @@ async def generate_response(history):
 
     response_text = response.choices[0].message.content.strip()
 
-    print(f'Last symbol {response_text[-1]}')
-    if re.search(r"https?://\S+|www\.\S+", response_text) or "@TimurWasHere" in response_text or response_text[-1] == '😂' or response_text[-1] == '😏':
-        print(f"Artefact detected in response, regenerating: {response_text}")
-        await asyncio.sleep(0.5)
-        return await generate_response(history)
-    else:
-        return response_text
+    response_text = re.sub(r"https?://\S+|www\.\S+", "", response_text)
+    response_text = response_text.replace("@TimurWasHere", "")
+    response_text = response_text.rstrip("😂😏")
 
+    return response_text
+
+async def describe_image(message_content):
+    description_response = await openai_client.chat.completions.create(
+        model="gpt-4o-mini-2024-07-18",
+        messages=[
+            {"role": "system", "content": "Describe the image(s) provided in a way that another language model can understand and respond appropriately."},
+            {"role": "user", "content": message_content}
+        ],
+        max_tokens=100
+    )
+    return description_response.choices[0].message.content.strip()
 
 async def get_display_name(sender):
     if sender.first_name:
