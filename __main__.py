@@ -207,7 +207,7 @@ async def handle_message(event):
 
         image_base64 = None
 
-        if event.document:
+        if event.photo or event.document:
             mime_type = event.document.mime_type
             print(f"Document: {mime_type}")
 
