@@ -208,7 +208,7 @@ async def handle_message(event):
         image_base64 = None
 
         if event.photo or event.document:
-            mime_type = event.document.mime_type
+            mime_type = getattr(event.document, "mime_type", None)
             print(f"Document: {mime_type}")
 
             if mime_type in ["image/gif", "image/webp", "application/x-tgsticker"]:
