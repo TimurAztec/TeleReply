@@ -312,13 +312,21 @@ async def generate_response(history):
             isinstance(msg, dict) and msg.get("type") == "image_url"
             for msg in last_message["content"]
         )
+
+        text_content = next(
+            (msg["text"] for msg in last_message["content"]
+             if isinstance(msg, dict) and msg.get("type") == "text"),
+            None
+        )
     else:
         has_image = False
+        text_content = None
 
     if has_image:
         image_description = await describe_image(last_message["content"])
         print(f"Image description: {image_description}")
-        history.append({"role": "user", "content": image_description})
+        history.pop()
+        history.append({"role": "user", "content": f'{text_content} | {image_description}' if text_content else image_description})
 
     response = await openai_client.chat.completions.create(
         model=model_id,
