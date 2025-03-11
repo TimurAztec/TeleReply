@@ -173,10 +173,9 @@ async def handle_message(event):
             if msg.from_id and msg.from_id.user_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
 
-    mention = await check_mention(me, sender_id, event)
-    print(f"Mentioned: {mention}")
-    if (event.is_group and not mention) or busy_replying[sender_id]:
-        print(f"Not mentioned or busy")
+
+    if busy_replying[sender_id]:
+        print(f"Busy!")
         return
 
     active = await check_active_sessions()
@@ -252,7 +251,11 @@ async def handle_message(event):
         if content_list:
             history.append({"role": "user", "content": content_list})
 
-        print(f"Context: {history}")
+        mention = await check_mention(me, sender_id, event)
+        print(f"Mentioned: {mention}")
+        if (event.is_group and not mention):
+            print(f"Not mentioned")
+            return
 
         await respond(first_msg=True, event=event, history=history)
 
