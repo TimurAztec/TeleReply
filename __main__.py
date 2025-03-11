@@ -253,7 +253,7 @@ async def handle_message(event):
 
         mention = await check_mention(me, sender_id, event)
         print(f"Mentioned: {mention}")
-        if (event.is_group and not mention):
+        if event.is_group and not mention:
             print(f"Not mentioned")
             return
 
