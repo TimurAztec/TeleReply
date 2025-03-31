@@ -4,6 +4,7 @@ import os
 import re
 import random
 import subprocess
+from pprint import pprint
 
 import ffmpeg
 import tiktoken
@@ -16,17 +17,24 @@ from telethon import TelegramClient, events
 from collections import defaultdict
 from dotenv import load_dotenv
 from telethon.tl.functions.account import GetAuthorizationsRequest
-from telethon.tl.functions.messages import SetTypingRequest
-from telethon.tl.types import SendMessageTypingAction, SendMessageRecordAudioAction, DocumentAttributeAudio
+from telethon.tl.functions.messages import SetTypingRequest, GetStickerSetRequest
+from telethon.tl.types import SendMessageTypingAction, SendMessageRecordAudioAction, DocumentAttributeAudio, \
+    InputStickerSetShortName
 
 from youtube import extract_youtube_video_id, get_youtube_video_title, summarize_youtube_transcript, \
     get_youtube_transcript
 whisper = None
-try:
-    import whisper
-    whisper = whisper
-except ImportError as e:
-    print("Could not import whisper module!")
+# try:
+#     import whisper
+#     whisper = whisper
+# except ImportError as e:
+#     print("Could not import whisper module!")
+
+EMOJI_REGEX = re.compile(
+    r'^[\U0001F3FB-\U0001F3FF]?[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF'
+    r'\U0001F700-\U0001F77F\U0001F780-\U0001F7FF\U0001F800-\U0001F8FF\U0001F900-\U0001F9FF'
+    r'\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF\U00002702-\U000027B0\U000024C2-\U0001F251]+$'
+)
 
 load_dotenv()
 API_ID = os.getenv("TELEGRAM_API_ID")
@@ -34,7 +42,6 @@ API_HASH = os.getenv("TELEGRAM_API_HASH")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CHAT_WHITE_LIST = os.getenv("CHAT_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
-
 client = TelegramClient("session", int(API_ID), API_HASH)
 me = None
 openai_client = AsyncOpenAI(
@@ -48,8 +55,8 @@ chats_history = defaultdict(list)
 NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
 SPEECH_SPEED = 15
-temperature=1
-presence_penalty=0.5
+temperature=1.011
+presence_penalty=0.33
 frequency_penalty=1
 top_p=0.5
 model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
@@ -332,7 +339,7 @@ async def generate_response(history):
         history.append({"role": "user", "content": f'{text_content} | {image_description}' if text_content else image_description})
 
     response = await openai_client.chat.completions.create(
-        model=model_id,
+        model="gpt-4o-mini-2024-07-18",
         messages=history,
         max_tokens=222,
         temperature=temperature,
@@ -348,6 +355,29 @@ async def generate_response(history):
     response_text = response_text.rstrip("😂😏")
 
     return response_text
+
+
+async def get_sticker_by_emoji(emoji):
+
+    sticker_sets = [
+        "monkeysbynorufx_by_fStikBot",
+        "Monkiz3_by_fStikBot",
+        "Angrykoreanartists"
+    ]
+
+    random.shuffle(sticker_sets)
+
+    for sticker_set_name in sticker_sets:
+        sticker_set = await client(GetStickerSetRequest(
+            stickerset=InputStickerSetShortName(sticker_set_name),
+            hash=0
+        ))
+
+        for pack, document in zip(sticker_set.packs, sticker_set.documents):
+            if pack.emoticon == emoji:
+                return document
+
+    return None
 
 async def describe_image(message_content):
     description_response = await openai_client.chat.completions.create(
@@ -370,9 +400,15 @@ async def get_display_name(sender):
     else:
         return ""
 
+def is_single_emoji(text):
+    return bool(EMOJI_REGEX.fullmatch(text))
+
 async def respond(first_msg: bool, event, history):
+    pprint(history)
     response_text = await generate_response(history)
     tokens_count = count_tokens(response_text)
+
+    print(f"Raw response: {response_text}")
 
     if "/stop-conversation" in response_text:
         raise ValueError("Conversation is over.")
@@ -387,11 +423,29 @@ async def respond(first_msg: bool, event, history):
         return
 
     await asyncio.sleep(random.uniform(0, 5))
-    if whisper and random.choice([True, True, False, True, True]):
+    if is_single_emoji(response_text):
+        file = await get_sticker_by_emoji(response_text)
+        if file:
+            await client.send_file(event.chat_id, file)
+        else:
+            await event.respond(response_text)
+        return
+
+    last_symbol_emoji = None
+    if is_single_emoji(response_text[-1]):
+        last_symbol_emoji = response_text[-1]
+        response_text = response_text[:-1]
+
+    if whisper and random.choice([False, False, True, False, False]):
         await respond_voice(event, response_text)
     else:
         await simulate_typing(event, response_text or '')
         await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
+
+    if last_symbol_emoji:
+        file = await get_sticker_by_emoji(last_symbol_emoji)
+        if file:
+            await client.send_file(event.chat_id, file)
 
     if next_msg:
         history.append({"role": "assistant", "content": event.text})
