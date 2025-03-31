@@ -20,7 +20,6 @@ from telethon.tl.functions.account import GetAuthorizationsRequest
 from telethon.tl.functions.messages import SetTypingRequest, GetStickerSetRequest
 from telethon.tl.types import SendMessageTypingAction, SendMessageRecordAudioAction, DocumentAttributeAudio, \
     InputStickerSetShortName
-
 from youtube import extract_youtube_video_id, get_youtube_video_title, summarize_youtube_transcript, \
     get_youtube_transcript
 whisper = None
@@ -39,6 +38,8 @@ EMOJI_REGEX = re.compile(
 load_dotenv()
 API_ID = os.getenv("TELEGRAM_API_ID")
 API_HASH = os.getenv("TELEGRAM_API_HASH")
+AFG_CHAT_ID = os.getenv("AFG_CHAT_ID")
+AFG_SYS_PROMPT=os.getenv("AFG_SYS_PROMPT")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CHAT_WHITE_LIST = os.getenv("CHAT_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
@@ -66,6 +67,11 @@ async def process_out_message(event):
     global reply_enabled, me, temperature, presence_penalty, frequency_penalty, top_p
     sender_id = event.chat_id if event.is_group else event.sender_id
     print(f"Out | Chat id: {event.chat_id} | Text: {event.text}")
+
+    if "/estimate" in event.text:
+        await handle_afg_message(event)
+        return
+
     if event.chat_id == me.id:
         if event.text.lower() == "reply-on" and not reply_enabled:
             reply_enabled = True
@@ -159,7 +165,7 @@ async def respond_voice(event, text):
 @client.on(events.NewMessage(incoming=True))
 async def process_in_message(event):
     print(f"Incoming | Chat id: {event.chat_id} | Text: {event.text}")
-    
+
     # if str(event.chat_id) not in CHAT_WHITE_LIST or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document or event.voice)):
     if str(event.chat_id) not in CHAT_WHITE_LIST or (event.text == '' and not (event.photo or event.document or event.voice)):
         return
@@ -275,6 +281,84 @@ async def handle_message(event):
     finally:
         busy_replying[sender_id] = False
 
+
+async def handle_afg_message(event):
+    global me, reply_enabled
+
+    msg = await event.get_reply_message()
+    sender_id = event.chat_id if event.is_group else event.sender_id
+    # if not chats_history[sender_id]:
+    #     previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
+    #     for msg in previous_messages:
+    #         if msg.from_id and msg.from_id.user_id != me.id and msg.text:
+    #             chats_history[sender_id].append({"role": "user", "content": msg.text})
+    #         if msg.from_id and msg.from_id.user_id == me.id and msg.text:
+    #             chats_history[sender_id].append({"role": "assistant", "content": msg.text})
+
+    if not reply_enabled:
+        return
+
+    await event.mark_read()
+    try:
+        system_message = {
+            "role": "system",
+            "content": AFG_SYS_PROMPT
+        }
+        # history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
+        # await summarize_history(sender_id)
+        history = []
+        history.insert(0, system_message)
+        content_list = []
+
+        if msg.text:
+            text = msg.text
+            content_list.append({"type": "text", "text": f'{text}'})
+
+        image_base64 = None
+
+        if msg.photo or msg.document:
+            mime_type = getattr(msg.document, "mime_type", None)
+            print(f"Document: {mime_type}")
+
+            if mime_type in ["image/gif", "image/webp", "application/x-tgsticker"]:
+                blob = await msg.download_media(bytes)
+                image_base64 = await convert_to_jpeg(blob)
+
+            elif mime_type in ["video/webm", "video/mp4"]:
+                blob = await msg.download_media(bytes)
+                out, err = (
+                    ffmpeg.input("pipe:0", format="mp4")  # Specify format
+                    .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
+                    .run(input=blob, capture_stdout=True, capture_stderr=True)
+                )
+                if err:
+                    print("FFmpeg error:", err)
+
+                image_base64 = base64.b64encode(out).decode("utf-8")
+            else:
+                blob = await msg.download_media(bytes)
+                image_base64 = base64.b64encode(blob).decode("utf-8")
+
+        if image_base64:
+            content_list.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "high"}
+            })
+
+        if content_list:
+            history.append({"role": "user", "content": content_list})
+
+        await respond(first_msg=True, event=event, history=history, afg=True)
+
+    except openai._exceptions.RateLimitError:
+        print("Quota limit exceeded or rate limit error")
+        return
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return
+    finally:
+        return
+
 async def summarize_history(sender_id):
     if len(chats_history[sender_id]) < NUM_PREVIOUS_MESSAGES:
         return
@@ -313,15 +397,18 @@ async def convert_to_jpeg(blob):
     image.save(buffer, format="JPEG")
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-async def generate_response(history):
+async def generate_response(history, afg=False):
     global model_id
     last_message = history[-1] if history else None
 
+    image_content = None
     if last_message and isinstance(last_message.get("content"), list):
-        has_image = any(
-            isinstance(msg, dict) and msg.get("type") == "image_url"
-            for msg in last_message["content"]
-        )
+        image_content = [
+            msg for msg in last_message["content"]
+            if isinstance(msg, dict) and msg.get("type") == "image_url"
+        ]
+
+        has_image = bool(image_content)
 
         text_content = next(
             (msg["text"] for msg in last_message["content"]
@@ -333,20 +420,27 @@ async def generate_response(history):
         text_content = None
 
     if has_image:
-        image_description = await describe_image(last_message["content"])
+        image_description = await describe_image(image_content if image_content else last_message["content"], detailed=afg)
         print(f"Image description: {image_description}")
+        print(f"Text content: {text_content}")
         history.pop()
-        history.append({"role": "user", "content": f'{text_content} | {image_description}' if text_content else image_description})
+        history.append({"role": "user", "content": f'image_description: {image_description} | text_content: {text_content}' if text_content else image_description})
 
-    response = await openai_client.chat.completions.create(
-        model="gpt-4o-mini-2024-07-18",
-        messages=history,
-        max_tokens=222,
-        temperature=temperature,
-        presence_penalty=presence_penalty,
-        frequency_penalty=frequency_penalty,
-        top_p=top_p
-    )
+    if not afg:
+        response = await openai_client.chat.completions.create(
+            model=model_id,
+            messages=history,
+            max_tokens=222,
+            temperature=temperature,
+            presence_penalty=presence_penalty,
+            frequency_penalty=frequency_penalty,
+            top_p=top_p
+        )
+    else:
+        response = await openai_client.chat.completions.create(
+            model="gpt-4o-search-preview",
+            messages=history
+        )
 
     response_text = response.choices[0].message.content.strip()
 
@@ -379,9 +473,9 @@ async def get_sticker_by_emoji(emoji):
 
     return None
 
-async def describe_image(message_content):
+async def describe_image(message_content, detailed=False):
     description_response = await openai_client.chat.completions.create(
-        model="gpt-4o-mini-2024-07-18",
+        model= "gpt-4o" if detailed else "gpt-4o-mini-2024-07-18",
         messages=[
             {"role": "system", "content": "Describe the image(s) provided in a way that another language model can understand and respond appropriately."},
             {"role": "user", "content": message_content}
@@ -403,9 +497,9 @@ async def get_display_name(sender):
 def is_single_emoji(text):
     return bool(EMOJI_REGEX.fullmatch(text))
 
-async def respond(first_msg: bool, event, history):
+async def respond(first_msg: bool, event, history, afg=False):
     pprint(history)
-    response_text = await generate_response(history)
+    response_text = await generate_response(history, afg)
     tokens_count = count_tokens(response_text)
 
     print(f"Raw response: {response_text}")
@@ -439,7 +533,8 @@ async def respond(first_msg: bool, event, history):
     if whisper and random.choice([False, False, True, False, False]):
         await respond_voice(event, response_text)
     else:
-        await simulate_typing(event, response_text or '')
+        if not afg:
+            await simulate_typing(event, response_text or '')
         await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
 
     if last_symbol_emoji:
