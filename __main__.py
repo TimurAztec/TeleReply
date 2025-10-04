@@ -98,7 +98,7 @@ async def process_out_message(event):
             await event.reply(f"✅ {param_name} set to {param_value}")
             return
     elif event.chat_id != me.id:
-        if "@TimurWasHere" in event.text:
+        if "@TimurIsHere" in event.text:
             if str(event.chat_id) in CHAT_WHITE_LIST:
                 await handle_message(event)
                 return
