@@ -60,7 +60,8 @@ temperature=1.011
 presence_penalty=0.33
 frequency_penalty=1
 top_p=1
-model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
+# model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
+model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOYAO"
 
 @client.on(events.NewMessage(incoming=False))
 async def process_out_message(event):
@@ -98,7 +99,7 @@ async def process_out_message(event):
             await event.reply(f"✅ {param_name} set to {param_value}")
             return
     elif event.chat_id != me.id:
-        if "@TimurIsHere" in event.text:
+        if ("@TimurIsHere" or "@TimurWasHere") in event.text:
             if str(event.chat_id) in CHAT_WHITE_LIST:
                 await handle_message(event)
                 return
