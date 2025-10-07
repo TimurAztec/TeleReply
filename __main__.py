@@ -163,7 +163,7 @@ async def process_in_message(event):
     print(f"Incoming | Chat id: {event.chat_id} | Text: {event.text}")
 
     # if str(event.chat_id) not in CHAT_WHITE_LIST or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document or event.voice)):
-    if str(event.chat_id) not in CHAT_WHITE_LIST or (event.text == '' and not (event.photo or event.document or event.voice)):
+    if (event.is_group and (str(event.chat_id) not in CHAT_WHITE_LIST)) or (event.text == '' and not (event.photo or event.document or event.voice)):
         return
 
     await handle_message(event)
