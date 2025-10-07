@@ -38,8 +38,6 @@ EMOJI_REGEX = re.compile(
 load_dotenv()
 API_ID = os.getenv("TELEGRAM_API_ID")
 API_HASH = os.getenv("TELEGRAM_API_HASH")
-AFG_CHAT_ID = os.getenv("AFG_CHAT_ID")
-AFG_SYS_PROMPT=os.getenv("AFG_SYS_PROMPT")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CHAT_WHITE_LIST = os.getenv("CHAT_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
@@ -59,19 +57,15 @@ SPEECH_SPEED = 15
 temperature=1.011
 presence_penalty=0.33
 frequency_penalty=1
-top_p=1
+top_p=0.33
 # model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
-model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOLvY:ckpt-step-1892"
+model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOYAO"
 
 @client.on(events.NewMessage(incoming=False))
 async def process_out_message(event):
     global reply_enabled, me, temperature, presence_penalty, frequency_penalty, top_p
     sender_id = event.chat_id if event.is_group else event.sender_id
     print(f"Out | Chat id: {event.chat_id} | Text: {event.text}")
-
-    if "/estimate" in event.text:
-        await handle_afg_message(event)
-        return
 
     if event.chat_id == me.id:
         if event.text.lower() == "reply-on" and not reply_enabled:
@@ -281,84 +275,7 @@ async def handle_message(event):
         return
     finally:
         busy_replying[sender_id] = False
-
-
-async def handle_afg_message(event):
-    global me, reply_enabled
-
-    msg = await event.get_reply_message()
-    sender_id = event.chat_id if event.is_group else event.sender_id
-    # if not chats_history[sender_id]:
-    #     previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
-    #     for msg in previous_messages:
-    #         if msg.from_id and msg.from_id.user_id != me.id and msg.text:
-    #             chats_history[sender_id].append({"role": "user", "content": msg.text})
-    #         if msg.from_id and msg.from_id.user_id == me.id and msg.text:
-    #             chats_history[sender_id].append({"role": "assistant", "content": msg.text})
-
-    if not reply_enabled:
-        return
-
-    await event.mark_read()
-    try:
-        system_message = {
-            "role": "system",
-            "content": AFG_SYS_PROMPT
-        }
-        # history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
-        # await summarize_history(sender_id)
-        history = []
-        history.insert(0, system_message)
-        content_list = []
-
-        if msg.text:
-            text = msg.text
-            content_list.append({"type": "text", "text": f'{text}'})
-
-        image_base64 = None
-
-        if msg.photo or msg.document:
-            mime_type = getattr(msg.document, "mime_type", None)
-            print(f"Document: {mime_type}")
-
-            if mime_type in ["image/gif", "image/webp", "application/x-tgsticker"]:
-                blob = await msg.download_media(bytes)
-                image_base64 = await convert_to_jpeg(blob)
-
-            elif mime_type in ["video/webm", "video/mp4"]:
-                blob = await msg.download_media(bytes)
-                out, err = (
-                    ffmpeg.input("pipe:0", format="mp4")  # Specify format
-                    .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
-                    .run(input=blob, capture_stdout=True, capture_stderr=True)
-                )
-                if err:
-                    print("FFmpeg error:", err)
-
-                image_base64 = base64.b64encode(out).decode("utf-8")
-            else:
-                blob = await msg.download_media(bytes)
-                image_base64 = base64.b64encode(blob).decode("utf-8")
-
-        if image_base64:
-            content_list.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "high"}
-            })
-
-        if content_list:
-            history.append({"role": "user", "content": content_list})
-
-        await respond(first_msg=True, event=event, history=history, afg=True)
-
-    except openai._exceptions.RateLimitError:
-        print("Quota limit exceeded or rate limit error")
-        return
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return
-    finally:
-        return
+        
 
 async def summarize_history(sender_id):
     if len(chats_history[sender_id]) < NUM_PREVIOUS_MESSAGES:
@@ -398,7 +315,7 @@ async def convert_to_jpeg(blob):
     image.save(buffer, format="JPEG")
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-async def generate_response(history, afg=False):
+async def generate_response(history, search=False):
     global model_id
     last_message = history[-1] if history else None
 
@@ -421,13 +338,13 @@ async def generate_response(history, afg=False):
         text_content = None
 
     if has_image:
-        image_description = await describe_image(image_content if image_content else last_message["content"], detailed=afg)
+        image_description = await describe_image(image_content if image_content else last_message["content"], detailed=search)
         print(f"Image description: {image_description}")
         print(f"Text content: {text_content}")
         history.pop()
         history.append({"role": "user", "content": f'image_description: {image_description} | text_content: {text_content}' if text_content else image_description})
 
-    if not afg:
+    if not search:
         response = await openai_client.chat.completions.create(
             model=model_id,
             messages=history,
@@ -498,9 +415,9 @@ async def get_display_name(sender):
 def is_single_emoji(text):
     return bool(EMOJI_REGEX.fullmatch(text))
 
-async def respond(first_msg: bool, event, history, afg=False):
+async def respond(first_msg: bool, event, history, search=False):
     pprint(history)
-    response_text = await generate_response(history, afg)
+    response_text = await generate_response(history, search)
     tokens_count = count_tokens(response_text)
 
     print(f"Raw response: {response_text}")
@@ -534,8 +451,7 @@ async def respond(first_msg: bool, event, history, afg=False):
     if whisper and random.choice([False, False, True, False, False]):
         await respond_voice(event, response_text)
     else:
-        if not afg:
-            await simulate_typing(event, response_text or '')
+        await simulate_typing(event, response_text or '')
         await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
 
     if last_symbol_emoji:
