@@ -201,14 +201,14 @@ async def handle_message(event):
         history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
         await summarize_history(sender_id)
         history.insert(0, system_message)
-        edit_event = copy.deepcopy(event)
+        edit_event = event
         if (not event.photo or not event.document):
             if event.is_reply:
                 msg = await event.get_reply_message()
-                if msg.photo:
-                    edit_event.photo = msg.photo
-                if msg.document:
-                    edit_event.document = msg.document
+                # if msg.photo:
+                #     edit_event.photo = msg.photo
+                # if msg.document:
+                #     edit_event.document = msg.document
                 
         history.append({"role": "user", "content": await get_event_content(edit_event)})
 
