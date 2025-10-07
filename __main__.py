@@ -61,7 +61,7 @@ presence_penalty=0.33
 frequency_penalty=1
 top_p=1
 # model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
-model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOYAO"
+model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOLvY:ckpt-step-1892"
 
 @client.on(events.NewMessage(incoming=False))
 async def process_out_message(event):
