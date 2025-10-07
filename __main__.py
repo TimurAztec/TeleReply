@@ -178,7 +178,7 @@ async def handle_message(event):
         previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
         for msg in previous_messages:
             if msg.from_id and msg.from_id.user_id != me.id:
-                chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg)})
+                chats_history[sender_id].append({"role": "user", "content": msg.text})
             if msg.from_id and msg.from_id.user_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
 
