@@ -59,7 +59,7 @@ SPEECH_SPEED = 15
 temperature=1.011
 presence_penalty=0.33
 frequency_penalty=1
-top_p=0.5
+top_p=1
 model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
 
 @client.on(events.NewMessage(incoming=False))
