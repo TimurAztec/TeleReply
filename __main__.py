@@ -1,4 +1,5 @@
 import base64
+import copy
 import io
 import os
 import re
@@ -177,7 +178,7 @@ async def handle_message(event):
         previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
         for msg in previous_messages:
             if msg.from_id and msg.from_id.user_id != me.id:
-                chats_history[sender_id].append({"role": "user", "content": msg.text})
+                chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg)})
             if msg.from_id and msg.from_id.user_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
 
@@ -200,64 +201,16 @@ async def handle_message(event):
         history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
         await summarize_history(sender_id)
         history.insert(0, system_message)
-        content_list = []
-
-        username = await get_display_name(sender)
-        if event.text:
-            text = event.text
-            youtube_id = extract_youtube_video_id(event.text)
-            if youtube_id:
-                youtube_title = get_youtube_video_title(youtube_id)
-                youtube_summary = get_youtube_transcript(youtube_id)
-                text += f"\n User attached video titled {youtube_title}: {youtube_summary}"
-            content_list.append({"type": "text", "text": f'{sender.username} says: {text}' if username else text})
-
-        image_base64 = None
-
-        if event.photo or event.document:
-            mime_type = getattr(event.document, "mime_type", None)
-            print(f"Document: {mime_type}")
-
-            if mime_type in ["image/gif", "image/webp", "application/x-tgsticker"]:
-                blob = await event.download_media(bytes)
-                image_base64 = await convert_to_jpeg(blob)
-
-            elif mime_type in ["video/webm", "video/mp4"]:
-                blob = await event.download_media(bytes)
-                out, err = (
-                    ffmpeg.input("pipe:0", format="mp4")  # Specify format
-                    .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
-                    .run(input=blob, capture_stdout=True, capture_stderr=True)
-                )
-                if err:
-                    print("FFmpeg error:", err)
-
-                image_base64 = base64.b64encode(out).decode("utf-8")
-
-            elif mime_type == "audio/ogg":
-                if whisper:
-                    audio_file = await event.download_media()
-                    model = whisper.load_model("base")
-                    transcribed_text = model.transcribe(audio_file)
-                    print(f"Audio transcription: {transcribed_text.get('text')}")
-                    history.append({"role": "user", "content": transcribed_text.get('text')})
-                    os.remove(audio_file)
-                else:
-                    content_list.append(
-                        {"type": "text", "text": "*User attached voice message, but you cant listen to it at the moment*"})
-
-            else:
-                blob = await event.download_media(bytes)
-                image_base64 = base64.b64encode(blob).decode("utf-8")
-
-        if image_base64:
-            content_list.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}
-            })
-
-        if content_list:
-            history.append({"role": "user", "content": content_list})
+        edit_event = copy.deepcopy(event)
+        if (not event.photo or not event.document):
+            if event.is_reply:
+                msg = await event.get_reply_message()
+                if msg.photo:
+                    edit_event.photo = msg.photo
+                if msg.document:
+                    edit_event.document = msg.document
+                
+        history.append({"role": "user", "content": await get_event_content(edit_event)})
 
         mention = await check_mention(me, sender_id, event)
         print(f"Mentioned: {mention}")
@@ -276,6 +229,65 @@ async def handle_message(event):
     finally:
         busy_replying[sender_id] = False
         
+async def get_event_content(event):
+    content_list = []
+    sender = await event.get_sender()
+    username = await get_display_name(sender)
+    
+    if event.text:
+        text = event.text
+        youtube_id = extract_youtube_video_id(event.text)
+        if youtube_id:
+            youtube_title = get_youtube_video_title(youtube_id)
+            youtube_summary = get_youtube_transcript(youtube_id)
+            text += f"\n User attached video titled {youtube_title}: {youtube_summary}"
+        content_list.append({"type": "text", "text": f'{sender.username} says: {text}' if username else text})
+
+    image_base64 = None
+
+    if event.photo or event.document:
+        mime_type = getattr(event.document, "mime_type", None)
+        print(f"Document: {mime_type}")
+
+        if mime_type in ["image/gif", "image/webp", "application/x-tgsticker"]:
+            blob = await event.download_media(bytes)
+            image_base64 = await convert_to_jpeg(blob)
+
+        elif mime_type in ["video/webm", "video/mp4"]:
+            blob = await event.download_media(bytes)
+            out, err = (
+                ffmpeg.input("pipe:0", format="mp4")  # Specify format
+                .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
+                .run(input=blob, capture_stdout=True, capture_stderr=True)
+            )
+            if err:
+                print("FFmpeg error:", err)
+
+            image_base64 = base64.b64encode(out).decode("utf-8")
+
+        elif mime_type == "audio/ogg":
+            if whisper:
+                audio_file = await event.download_media()
+                model = whisper.load_model("base")
+                transcribed_text = model.transcribe(audio_file)
+                print(f"Audio transcription: {transcribed_text.get('text')}")
+                # history.append({"role": "user", "content": transcribed_text.get('text')})
+                os.remove(audio_file)
+            else:
+                content_list.append(
+                    {"type": "text", "text": "*User attached voice message, but you cant listen to it at the moment*"})
+
+        else:
+            blob = await event.download_media(bytes)
+            image_base64 = base64.b64encode(blob).decode("utf-8")
+
+    if image_base64:
+        content_list.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}
+        })
+        
+    return content_list
 
 async def summarize_history(sender_id):
     if len(chats_history[sender_id]) < NUM_PREVIOUS_MESSAGES:
@@ -503,7 +515,7 @@ async def check_mention(me, sender_id, event):
 
     if chats_history.get(sender_id) and len(chats_history[sender_id]) > 2:
         last_msg = chats_history[sender_id][-2]
-
+        print(f"last_mgs| {last_msg}")
         if last_msg.get("role") == "assistant" and not event.is_reply:
             return True
 
