@@ -55,12 +55,12 @@ chats_history = defaultdict(list)
 NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
 SPEECH_SPEED = 15
-temperature=1.011
-presence_penalty=0.33
+temperature=0.5
+presence_penalty=0.5
 frequency_penalty=1
-top_p=0.33
+top_p=0.5
 # model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
-model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6RCOYAO"
+model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B5qD7QVU"
 
 @client.on(events.NewMessage(incoming=False))
 async def process_out_message(event):
@@ -178,7 +178,11 @@ async def handle_message(event):
         previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
         for msg in previous_messages:
             if msg.from_id and msg.from_id.user_id != me.id:
-                chats_history[sender_id].append({"role": "user", "content": msg.text})
+                text = msg.text
+                if msg.photo or msg.document:
+                    image_description = await describe_image(msg.document, detailed=False)
+                    text = "User sent an image described as: " + image_description
+                chats_history[sender_id].append({"role": "user", "content": text})
             if msg.from_id and msg.from_id.user_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
 
@@ -201,16 +205,8 @@ async def handle_message(event):
         history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
         await summarize_history(sender_id)
         history.insert(0, system_message)
-        edit_event = event
-        if (not event.photo or not event.document):
-            if event.is_reply:
-                msg = await event.get_reply_message()
-                # if msg.photo:
-                #     edit_event.photo = msg.photo
-                # if msg.document:
-                #     edit_event.document = msg.document
                 
-        history.append({"role": "user", "content": await get_event_content(edit_event)})
+        history.append({"role": "user", "content": await get_event_content(event)})
 
         mention = await check_mention(me, sender_id, event)
         print(f"Mentioned: {mention}")
@@ -497,6 +493,12 @@ async def simulate_voice_recording(event, text):
 
 
 async def check_mention(me, sender_id, event):
+    if event.forward:
+        fwd = event.fwd_from
+        
+        if fwd.from_id and getattr(fwd.from_id, 'channel_id', None):
+            return True
+    
     if event.is_reply:
         msg = await event.get_reply_message()
         if msg.from_id and msg.from_id.user_id == me.id:
