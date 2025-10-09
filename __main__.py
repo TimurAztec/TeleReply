@@ -6,6 +6,7 @@ import re
 import random
 import subprocess
 from pprint import pprint
+import tempfile
 
 import ffmpeg
 import tiktoken
@@ -172,20 +173,20 @@ async def process_in_message(event):
 async def handle_message(event):
     global me, reply_enabled, busy_replying, temperature, frequency_penalty, presence_penalty, top_p
     sender = await event.get_sender()
+    system_message = {
+        "role": "system",
+        "content": SYS_PROMPT
+    }
 
     sender_id = event.chat_id if event.is_group else event.sender_id
     if not chats_history[sender_id]:
         previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
         for msg in previous_messages:
             if msg.from_id and msg.from_id.user_id != me.id:
-                text = msg.text
-                if msg.photo or msg.document:
-                    image_description = await describe_image(msg.document, detailed=False)
-                    text = "User sent an image described as: " + image_description
-                chats_history[sender_id].append({"role": "user", "content": text})
+                chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg, True)})
             if msg.from_id and msg.from_id.user_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
-
+        chats_history[sender_id].insert(0, system_message)
 
     if busy_replying[sender_id]:
         print(f"Busy!")
@@ -198,13 +199,10 @@ async def handle_message(event):
     await event.mark_read()
     busy_replying[sender_id] = True
     try:
-        system_message = {
-            "role": "system",
-            "content": SYS_PROMPT
-        }
         history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
-        await summarize_history(sender_id)
-        history.insert(0, system_message)
+        if len(chats_history[sender_id]) > NUM_PREVIOUS_MESSAGES:
+            await summarize_history(sender_id)
+            history.insert(0, system_message)
                 
         history.append({"role": "user", "content": await get_event_content(event)})
 
@@ -225,7 +223,7 @@ async def handle_message(event):
     finally:
         busy_replying[sender_id] = False
         
-async def get_event_content(event):
+async def get_event_content(event, textOnly = False):
     content_list = []
     sender = await event.get_sender()
     username = await get_display_name(sender)
@@ -251,13 +249,21 @@ async def get_event_content(event):
 
         elif mime_type in ["video/webm", "video/mp4"]:
             blob = await event.download_media(bytes)
-            out, err = (
-                ffmpeg.input("pipe:0", format="mp4")  # Specify format
-                .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg")
-                .run(input=blob, capture_stdout=True, capture_stderr=True)
-            )
-            if err:
-                print("FFmpeg error:", err)
+            fmt = "webm" if "webm" in mime_type else "mp4"
+
+            try: 
+                with tempfile.NamedTemporaryFile(suffix=f".{fmt}") as tmp:
+                    tmp.write(blob)
+                    tmp.flush()
+
+                    out, err = (
+                        ffmpeg
+                        .input(tmp.name)
+                        .output("pipe:1", vframes=1, format="image2", vcodec="mjpeg", update=1)
+                        .run(capture_stdout=True, capture_stderr=True)
+                    )
+            except ffmpeg.Error as e:
+                print("FFmpeg error:", e.stderr.decode(errors="ignore"))
 
             image_base64 = base64.b64encode(out).decode("utf-8")
 
@@ -278,10 +284,15 @@ async def get_event_content(event):
             image_base64 = base64.b64encode(blob).decode("utf-8")
 
     if image_base64:
-        content_list.append({
-            "type": "image_url",
-            "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}
-        })
+        if not textOnly:
+            content_list.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}
+            })
+        else:
+            img_description = await describe_image(image_base64, detailed=False)
+            content_list.append(
+                    {"type": "text", "text": "*User attached an image described as*: " + img_description})
         
     return content_list
 
@@ -515,10 +526,11 @@ async def check_mention(me, sender_id, event):
     if f"@{me.username}" in event.text:
         return True
 
-    if chats_history.get(sender_id) and len(chats_history[sender_id]) > 2:
+    if chats_history.get(sender_id) and (len(chats_history[sender_id]) > 2):
         last_msg = chats_history[sender_id][-2]
         print(f"last_mgs| {last_msg}")
-        if last_msg.get("role") == "assistant" and not event.is_reply:
+        # if last_msg.get("role") == "assistant" and not event.is_reply:
+        if last_msg.get("role") == "assistant":
             return True
 
     return False
