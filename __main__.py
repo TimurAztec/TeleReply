@@ -57,7 +57,7 @@ NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
 SPEECH_SPEED = 15
 temperature=0.5
-presence_penalty=0.5
+presence_penalty=0.9
 frequency_penalty=1
 top_p=0.5
 # model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
@@ -95,8 +95,8 @@ async def process_out_message(event):
             await event.reply(f"✅ {param_name} set to {param_value}")
             return
     elif event.chat_id != me.id:
-        if ("@TimurIsHere" or "@TimurWasHere") in event.text:
-            if str(event.chat_id) in CHAT_WHITE_LIST:
+        if f"@{me.username}" in event.text:
+            # if str(event.chat_id) in CHAT_WHITE_LIST:
                 await handle_message(event)
                 return
 
@@ -182,9 +182,9 @@ async def handle_message(event):
     if not chats_history[sender_id]:
         previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
         for msg in previous_messages:
-            if msg.from_id and msg.from_id.user_id != me.id:
+            if msg.sender_id and msg.sender_id != me.id:
                 chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg, True)})
-            if msg.from_id and msg.from_id.user_id == me.id:
+            if msg.sender_id and msg.sender_id == me.id:
                 chats_history[sender_id].append({"role": "assistant", "content": msg.text})
         chats_history[sender_id].insert(0, system_message)
 
@@ -199,12 +199,13 @@ async def handle_message(event):
     await event.mark_read()
     busy_replying[sender_id] = True
     try:
-        history = chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
-        if len(chats_history[sender_id]) > NUM_PREVIOUS_MESSAGES:
+        msg_content = await get_event_content(event)
+        if len(chats_history[sender_id]) > (NUM_PREVIOUS_MESSAGES/2):
             await summarize_history(sender_id)
-            history.insert(0, system_message)
-                
-        history.append({"role": "user", "content": await get_event_content(event)})
+            
+        history = chats_history[sender_id]    
+        chats_history[sender_id].append({"role": "user", "content": msg_content})
+        history.append({"role": "user", "content": msg_content})
 
         mention = await check_mention(me, sender_id, event)
         print(f"Mentioned: {mention}")
@@ -297,9 +298,6 @@ async def get_event_content(event, textOnly = False):
     return content_list
 
 async def summarize_history(sender_id):
-    if len(chats_history[sender_id]) < NUM_PREVIOUS_MESSAGES:
-        return
-
     summary_prompt = {
         "role": "system",
         "content": "Summarize this conversation while keeping key details relevant to the discussion."
@@ -320,7 +318,10 @@ async def summarize_history(sender_id):
         )
         summary = response.choices[0].message.content.strip()
         print(f"History summary: {summary}")
-        chats_history[sender_id] = [{"role": "system", "content": "Previous conversation Summary: " + summary}]
+        chats_history[sender_id] = [
+            {"role": "system", "content": SYS_PROMPT},
+            {"role": "system", "content": "Previous conversation Summary: " + summary}
+            ]
 
     except openai._exceptions.RateLimitError:
         print("Rate limit exceeded, skipping history summarization.")
@@ -376,7 +377,8 @@ async def generate_response(history, search=False):
     else:
         response = await openai_client.chat.completions.create(
             model="gpt-4o-search-preview",
-            messages=history
+            messages=history,
+            max_tokens=222
         )
 
     response_text = response.choices[0].message.content.strip()
@@ -443,6 +445,10 @@ async def respond(first_msg: bool, event, history, search=False):
 
     if "/stop-conversation" in response_text:
         raise ValueError("Conversation is over.")
+    
+    if "/search" in response_text:
+        await respond(True, event, history, True)
+        return
 
     next_msg = False
     if "/next-msg" in response_text:
