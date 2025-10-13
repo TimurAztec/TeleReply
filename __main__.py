@@ -7,6 +7,7 @@ import random
 import subprocess
 from pprint import pprint
 import tempfile
+import threading
 
 import ffmpeg
 import tiktoken
@@ -43,6 +44,9 @@ API_HASH = os.getenv("TELEGRAM_API_HASH")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CHAT_WHITE_LIST = os.getenv("CHAT_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
+HISTORY_MODEL="gpt-4.1-mini"
+PROBABILITY_MODEL="gpt-4.1-nano"
+HISTORY_TOKENS=1000
 client = TelegramClient("session", int(API_ID), API_HASH)
 me = None
 openai_client = AsyncOpenAI(
@@ -51,10 +55,12 @@ openai_client = AsyncOpenAI(
 
 reply_enabled = True
 busy_replying = defaultdict(lambda: False)
+wait_to_end_typing_timers = defaultdict(list)
 chats_history = defaultdict(list)
 
 NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
+WAIT_TIMER = 5.0
 SPEECH_SPEED = 15
 temperature=0.5
 presence_penalty=0.9
@@ -62,6 +68,8 @@ frequency_penalty=1
 top_p=0.5
 # model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
 model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B5qD7QVU"
+
+main_loop = asyncio.get_event_loop()
 
 @client.on(events.NewMessage(incoming=False))
 async def process_out_message(event):
@@ -167,6 +175,15 @@ async def process_in_message(event):
     if (event.is_group and (str(event.chat_id) not in CHAT_WHITE_LIST)) or (event.text == '' and not (event.photo or event.document or event.voice)):
         return
 
+    sender_id = event.chat_id if event.is_group else event.sender_id
+    if wait_to_end_typing_timers[sender_id]:
+        wait_to_end_typing_timers[sender_id]["timer"].cancel()
+    wait_to_end_typing_timers[sender_id] = {
+        "timer": threading.Timer(WAIT_TIMER, end_wait_timer, args=(sender_id, event)),
+        "active": True
+    }
+    wait_to_end_typing_timers[sender_id]["timer"].start()
+
     await handle_message(event)
 
 
@@ -179,14 +196,6 @@ async def handle_message(event):
     }
 
     sender_id = event.chat_id if event.is_group else event.sender_id
-    if not chats_history[sender_id]:
-        previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
-        for msg in previous_messages:
-            if msg.sender_id and msg.sender_id != me.id:
-                chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg, True)})
-            if msg.sender_id and msg.sender_id == me.id:
-                chats_history[sender_id].append({"role": "assistant", "content": msg.text})
-        chats_history[sender_id].insert(0, system_message)
 
     if busy_replying[sender_id]:
         print(f"Busy!")
@@ -196,24 +205,33 @@ async def handle_message(event):
     if not reply_enabled or active:
         return
 
-    await event.mark_read()
     busy_replying[sender_id] = True
     try:
-        msg_content = await get_event_content(event)
-        if len(chats_history[sender_id]) > (NUM_PREVIOUS_MESSAGES/2):
-            await summarize_history(sender_id)
-            
-        history = chats_history[sender_id]    
-        chats_history[sender_id].append({"role": "user", "content": msg_content})
-        history.append({"role": "user", "content": msg_content})
+        if not chats_history[sender_id]:
+            previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
+            for msg in previous_messages:
+                if msg.sender_id and msg.sender_id != me.id:
+                    chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg, True)})
+                if msg.sender_id and msg.sender_id == me.id:
+                    chats_history[sender_id].append({"role": "assistant", "content": msg.text})
+            chats_history[sender_id].insert(0, system_message)
+        else:
+            msg_content = await get_event_content(event)
+            if count_tokens(get_plain_chat_history(chats_history[sender_id]), HISTORY_MODEL) >= (HISTORY_TOKENS):
+                await summarize_history(sender_id)
+                
+            chats_history[sender_id].append({"role": "user", "content": msg_content})
+        await event.mark_read()
+        
+        if wait_to_end_typing_timers[sender_id]["active"]:
+            return
 
         mention = await check_mention(me, sender_id, event)
-        print(f"Mentioned: {mention}")
         if event.is_group and not mention:
             print(f"Not mentioned")
             return
 
-        await respond(first_msg=True, event=event, history=history)
+        await respond(first_msg=True, event=event, history=chats_history[sender_id])
 
     except openai._exceptions.RateLimitError:
         print("Quota limit exceeded or rate limit error")
@@ -285,15 +303,9 @@ async def get_event_content(event, textOnly = False):
             image_base64 = base64.b64encode(blob).decode("utf-8")
 
     if image_base64:
-        if not textOnly:
-            content_list.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}
-            })
-        else:
-            img_description = await describe_image(image_base64, detailed=False)
-            content_list.append(
-                    {"type": "text", "text": "*User attached an image described as*: " + img_description})
+        img_description = await describe_image(image_base64, detailed=True)
+        content_list.append(
+                {"type": "text", "text": "*User attached an image that looks like*: " + img_description})
         
     return content_list
 
@@ -303,17 +315,13 @@ async def summarize_history(sender_id):
         "content": "Summarize this conversation while keeping key details relevant to the discussion."
     }
 
-    history_text = "\n".join([
-        f'{msg["role"].capitalize()}: {msg["content"]}' if isinstance(msg["content"], str)
-        else f'{msg["role"].capitalize()}: {str(msg["content"])}'
-        for msg in chats_history[sender_id][-NUM_PREVIOUS_MESSAGES:]
-    ])
+    history_text = get_plain_chat_history(chats_history[sender_id])
 
     try:
         response = await openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=HISTORY_MODEL,
             messages=[summary_prompt, {"role": "user", "content": history_text}],
-            max_tokens=200,
+            max_tokens=250,
             temperature=0.33
         )
         summary = response.choices[0].message.content.strip()
@@ -335,34 +343,32 @@ async def convert_to_jpeg(blob):
     image.save(buffer, format="JPEG")
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
+async def estimate_response_probability(history):
+    probability_prompt = {
+        "role": "system",
+        "content": "Should the assistant respond now? Give a confidence 0–1. NUMBER ONLY"
+    }
+    messages = [probability_prompt] + history
+    
+    response = await openai_client.chat.completions.create(
+        model=PROBABILITY_MODEL,
+        messages=messages    
+    )
+    
+    text = response.choices[0].message.content.strip()
+
+    match = re.search(r"\d*\.?\d+", text)
+    if match:
+        try:
+            prob = float(match.group())
+            return prob > 0.5
+        except ValueError:
+            return False
+    else:
+        return False
+
 async def generate_response(history, search=False):
     global model_id
-    last_message = history[-1] if history else None
-
-    image_content = None
-    if last_message and isinstance(last_message.get("content"), list):
-        image_content = [
-            msg for msg in last_message["content"]
-            if isinstance(msg, dict) and msg.get("type") == "image_url"
-        ]
-
-        has_image = bool(image_content)
-
-        text_content = next(
-            (msg["text"] for msg in last_message["content"]
-             if isinstance(msg, dict) and msg.get("type") == "text"),
-            None
-        )
-    else:
-        has_image = False
-        text_content = None
-
-    if has_image:
-        image_description = await describe_image(image_content if image_content else last_message["content"], detailed=search)
-        print(f"Image description: {image_description}")
-        print(f"Text content: {text_content}")
-        history.pop()
-        history.append({"role": "user", "content": f'image_description: {image_description} | text_content: {text_content}' if text_content else image_description})
 
     if not search:
         response = await openai_client.chat.completions.create(
@@ -412,14 +418,14 @@ async def get_sticker_by_emoji(emoji):
 
     return None
 
-async def describe_image(message_content, detailed=False):
+async def describe_image(image_base64, detailed=False):
     description_response = await openai_client.chat.completions.create(
         model= "gpt-4o" if detailed else "gpt-4o-mini-2024-07-18",
         messages=[
             {"role": "system", "content": "Describe the image(s) provided in a way that another language model can understand and respond appropriately."},
-            {"role": "user", "content": message_content}
+            {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}}]}
         ],
-        max_tokens=100
+        max_tokens=222
     )
     return description_response.choices[0].message.content.strip()
 
@@ -439,7 +445,6 @@ def is_single_emoji(text):
 async def respond(first_msg: bool, event, history, search=False):
     pprint(history)
     response_text = await generate_response(history, search)
-    tokens_count = count_tokens(response_text)
 
     print(f"Raw response: {response_text}")
 
@@ -539,7 +544,7 @@ async def check_mention(me, sender_id, event):
         if last_msg.get("role") == "assistant":
             return True
 
-    return False
+    return await estimate_response_probability(chats_history[sender_id])
 
 async def check_active_sessions():
     global client
@@ -561,9 +566,26 @@ async def check_active_sessions():
     return False
 
 def count_tokens(text, model="gpt-4o-mini-2024-07-18"):
-    encoding = tiktoken.encoding_for_model(model)
-    tokens = encoding.encode(text)
-    return len(tokens)
+    encoding = tiktoken.get_encoding("o200k_base")
+    num_tokens = len(encoding.encode(text))
+    return num_tokens
+
+def get_plain_chat_history(msgs):
+    return "\n".join([
+        f'{msg["role"].capitalize()}: {msg.get("text")}' if msg.get("type") == "text"
+        else f'{msg["role"].capitalize()}: sent document'
+        for msg in msgs
+    ])
+    
+    # return "\n".join([
+    #     f'{msg["role"].capitalize()}: {msg["content"]}' if isinstance(msg["content"], str)
+    #     else f'{msg["role"].capitalize()}: {str(msg["content"])}'
+    #     for msg in msgs
+    # ])
+    
+def end_wait_timer(sender_id, event):
+    wait_to_end_typing_timers[sender_id]["active"] = False
+    asyncio.run_coroutine_threadsafe(handle_message(event), main_loop)
 
 async def init():
     global me
