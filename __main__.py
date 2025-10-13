@@ -357,11 +357,11 @@ async def estimate_response_probability(history):
     }
 
     messages = copy.deepcopy(history)
-    messages.insert(1, probability_prompt)
-    # if messages and messages[0].get("role") == "system":
-    #     messages[0] = probability_prompt
-    # else:
-    #     messages.insert(0, probability_prompt)
+    # messages.insert(1, probability_prompt)
+    if messages and messages[0].get("role") == "system":
+        messages[0] = probability_prompt
+    else:
+        messages.insert(0, probability_prompt)
 
     for attempt in range(2):
         try:
