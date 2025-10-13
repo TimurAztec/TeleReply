@@ -59,7 +59,7 @@ wait_to_end_typing_timers = defaultdict(list)
 chats_history = defaultdict(list)
 
 NUM_PREVIOUS_MESSAGES = 10
-TYPING_SPEED = 8
+TYPING_SPEED = 10
 WAIT_TIMER = 5.0
 SPEECH_SPEED = 15
 temperature=0.777
