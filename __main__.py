@@ -116,7 +116,7 @@ async def process_out_message(event):
             await event.reply(f"Chat removed: {event.chat_id}")
         else:
             if event.text:
-                chats_history[sender_id].append({"role": "assistant", "content": event.text})
+                chats_history[sender_id].append({"role": "assistant", "content": [{"type": "text", "text": event.text}]})
 
 async def respond_voice(event, text):
     user_id = event.chat_id
@@ -197,15 +197,10 @@ async def handle_message(event):
 
     sender_id = event.chat_id if event.is_group else event.sender_id
 
-    if busy_replying[sender_id]:
-        print(f"Busy!")
-        return
-
     active = await check_active_sessions()
     if not reply_enabled or active:
         return
 
-    busy_replying[sender_id] = True
     try:
         if not chats_history[sender_id]:
             previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
@@ -213,14 +208,15 @@ async def handle_message(event):
                 if msg.sender_id and msg.sender_id != me.id:
                     chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg, True)})
                 if msg.sender_id and msg.sender_id == me.id:
-                    chats_history[sender_id].append({"role": "assistant", "content": msg.text})
+                    chats_history[sender_id].append({"role": "assistant", "content": [{"type": "text", "text": msg.text}]})
+            chats_history[sender_id].reverse()
             chats_history[sender_id].insert(0, system_message)
         else:
             msg_content = await get_event_content(event)
             if count_tokens(get_plain_chat_history(chats_history[sender_id]), HISTORY_MODEL) >= (HISTORY_TOKENS):
                 await summarize_history(sender_id)
                 
-            chats_history[sender_id].append({"role": "user", "content": msg_content})
+            chats_history[sender_id].append({"role": "user", "content": [{"type": "text", "text": msg_content}]})
         await event.mark_read()
         
         if wait_to_end_typing_timers[sender_id]["active"]:
@@ -230,7 +226,12 @@ async def handle_message(event):
         if event.is_group and not mention:
             print(f"Not mentioned")
             return
+        
+        if busy_replying[sender_id]:
+            print(f"Busy!")
+            return
 
+        busy_replying[sender_id] = True
         await respond(first_msg=True, event=event, history=chats_history[sender_id])
 
     except openai._exceptions.RateLimitError:
@@ -303,7 +304,7 @@ async def get_event_content(event, textOnly = False):
             image_base64 = base64.b64encode(blob).decode("utf-8")
 
     if image_base64:
-        img_description = await describe_image(image_base64, detailed=True)
+        img_description = await describe_image(image_base64, detailed=False)
         content_list.append(
                 {"type": "text", "text": "*User attached an image that looks like*: " + img_description})
         
@@ -346,26 +347,44 @@ async def convert_to_jpeg(blob):
 async def estimate_response_probability(history):
     probability_prompt = {
         "role": "system",
-        "content": "Should the assistant respond now? Give a confidence 0–1. NUMBER ONLY"
+        "content": (
+            "You are a classifier. "
+            "Decide if the assistant should respond. "
+            "Output only one number between 0 and 1, no text, no punctuation."
+        )
     }
-    messages = [probability_prompt] + history
-    
-    response = await openai_client.chat.completions.create(
-        model=PROBABILITY_MODEL,
-        messages=messages    
-    )
-    
-    text = response.choices[0].message.content.strip()
 
-    match = re.search(r"\d*\.?\d+", text)
-    if match:
-        try:
-            prob = float(match.group())
-            return prob > 0.5
-        except ValueError:
-            return False
+    messages = copy.deepcopy(history)
+    if messages and messages[0].get("role") == "system":
+        messages[0] = probability_prompt
     else:
-        return False
+        messages.insert(0, probability_prompt)
+
+    for attempt in range(2):
+        try:
+            response = await openai_client.chat.completions.create(
+                model=PROBABILITY_MODEL,
+                messages=sanitize_history(messages)
+            )
+
+            text = (response.choices[0].message.content or "").strip()
+
+            match = re.search(r"\b\d*\.?\d+\b", text)
+            if match:
+                prob = float(match.group())
+                prob = max(0.0, min(1.0, prob))
+                return prob > 0.5
+
+        except Exception as e:
+            print(f"[estimate_response_probability] attempt {attempt+1} failed:", e)
+
+        messages[0]["content"] = (
+            "Output only a number between 0 and 1. "
+            "If unsure, output 0. No text, no explanation."
+        )
+        await asyncio.sleep(0.2)
+
+    return False
 
 async def generate_response(history, search=False):
     global model_id
@@ -373,7 +392,7 @@ async def generate_response(history, search=False):
     if not search:
         response = await openai_client.chat.completions.create(
             model=model_id,
-            messages=history,
+            messages=sanitize_history(history),
             max_tokens=222,
             temperature=temperature,
             presence_penalty=presence_penalty,
@@ -383,7 +402,7 @@ async def generate_response(history, search=False):
     else:
         response = await openai_client.chat.completions.create(
             model="gpt-4o-search-preview",
-            messages=history,
+            messages=sanitize_history(history),
             max_tokens=222
         )
 
@@ -490,7 +509,7 @@ async def respond(first_msg: bool, event, history, search=False):
             await client.send_file(event.chat_id, file)
 
     if next_msg:
-        history.append({"role": "assistant", "content": event.text})
+        history.append({"role": "assistant", "content": [{"type": "text", "text": event.text}]})
         await respond(False, event, history)
 
 async def simulate_typing(event, text):
@@ -571,21 +590,93 @@ def count_tokens(text, model="gpt-4o-mini-2024-07-18"):
     return num_tokens
 
 def get_plain_chat_history(msgs):
-    return "\n".join([
-        f'{msg["role"].capitalize()}: {msg.get("text")}' if msg.get("type") == "text"
-        else f'{msg["role"].capitalize()}: sent document'
-        for msg in msgs
-    ])
-    
-    # return "\n".join([
-    #     f'{msg["role"].capitalize()}: {msg["content"]}' if isinstance(msg["content"], str)
-    #     else f'{msg["role"].capitalize()}: {str(msg["content"])}'
-    #     for msg in msgs
-    # ])
+    lines = []
+
+    for msg in msgs or []:
+        try:
+            role = msg.get("role", "").capitalize()
+            if role.lower() == "system" or not role:
+                continue
+
+            content = msg.get("content")
+
+            if isinstance(content, str):
+                text = content.strip()
+            elif isinstance(content, list) and content:
+                text_item = next(
+                    (item.get("text") for item in content if item.get("type") == "text"),
+                    None
+                )
+                if text_item:
+                    text = text_item.strip()
+                else:
+                    text = "*sent document or photo*"
+            else:
+                text = "*unknown message format*"
+
+            lines.append(f"{role}: {text}")
+
+        except Exception as e:
+            lines.append(f"Error parsing message: {e}")
+
+    return "\n".join(lines)
     
 def end_wait_timer(sender_id, event):
     wait_to_end_typing_timers[sender_id]["active"] = False
     asyncio.run_coroutine_threadsafe(handle_message(event), main_loop)
+    
+def sanitize_history(msgs):
+    cleaned = []
+
+    for msg in msgs or []:
+        try:
+            role = msg.get("role", "")
+            if not role:
+                continue
+
+            content = msg.get("content")
+
+            if isinstance(content, str):
+                cleaned.append({"role": role, "content": content})
+                continue
+
+            if isinstance(content, list):
+                valid_items = []
+
+                for item in content:
+                    if not isinstance(item, dict):
+                        continue
+
+                    item_type = item.get("type", "text")
+                    item_text = item.get("text")
+
+                    if isinstance(item_text, list):
+                        parts = []
+                        for sub in item_text:
+                            if isinstance(sub, dict) and "text" in sub:
+                                parts.append(str(sub["text"]))
+                            elif isinstance(sub, str):
+                                parts.append(sub)
+                        item_text = " ".join(parts).strip()
+
+                    if not isinstance(item_text, str):
+                        item_text = str(item_text) if item_text is not None else ""
+
+                    valid_items.append({
+                        "type": item_type,
+                        "text": item_text
+                    })
+
+                cleaned.append({"role": role, "content": valid_items})
+                continue
+
+            cleaned.append({"role": role, "content": str(content)})
+
+        except Exception as e:
+            cleaned.append({"role": "system", "content": f"*error cleaning message: {e}*"})
+
+    return cleaned
+
 
 async def init():
     global me
