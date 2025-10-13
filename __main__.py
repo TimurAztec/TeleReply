@@ -59,7 +59,7 @@ wait_to_end_typing_timers = defaultdict(list)
 chats_history = defaultdict(list)
 
 NUM_PREVIOUS_MESSAGES = 10
-TYPING_SPEED = 10
+TYPING_SPEED = 9
 WAIT_TIMER = 5.0
 SPEECH_SPEED = 15
 temperature=0.777
@@ -349,17 +349,19 @@ async def estimate_response_probability(history):
         "role": "system",
         "content": (
             "You are a classifier. "
+            "Pay attention to context. "
+            "Do not get involved into dialog between other users. "
             "Decide if the assistant should respond. "
-            "Output only one number between 0 and 1, no text, no punctuation. "
-            "Do not get involved into dialog between other users."
+            "Output only one number between 0 and 1, no text, no punctuation."
         )
     }
 
     messages = copy.deepcopy(history)
-    if messages and messages[0].get("role") == "system":
-        messages[0] = probability_prompt
-    else:
-        messages.insert(0, probability_prompt)
+    messages.insert(1, probability_prompt)
+    # if messages and messages[0].get("role") == "system":
+    #     messages[0] = probability_prompt
+    # else:
+    #     messages.insert(0, probability_prompt)
 
     for attempt in range(2):
         try:
