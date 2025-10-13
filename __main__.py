@@ -59,7 +59,7 @@ wait_to_end_typing_timers = defaultdict(list)
 chats_history = defaultdict(list)
 
 NUM_PREVIOUS_MESSAGES = 10
-TYPING_SPEED = 9
+TYPING_SPEED = 8
 WAIT_TIMER = 5.0
 SPEECH_SPEED = 15
 temperature=0.777
@@ -206,7 +206,7 @@ async def handle_message(event):
             previous_messages = await client.get_messages(event.chat_id, limit=round(NUM_PREVIOUS_MESSAGES))
             for msg in previous_messages:
                 if msg.sender_id and msg.sender_id != me.id:
-                    chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg, True)})
+                    chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg)})
                 if msg.sender_id and msg.sender_id == me.id:
                     chats_history[sender_id].append({"role": "assistant", "content": [{"type": "text", "text": msg.text}]})
             chats_history[sender_id].reverse()
@@ -216,7 +216,7 @@ async def handle_message(event):
             if count_tokens(get_plain_chat_history(chats_history[sender_id]), HISTORY_MODEL) >= (HISTORY_TOKENS):
                 await summarize_history(sender_id)
                 
-            chats_history[sender_id].append({"role": "user", "content": [{"type": "text", "text": msg_content}]})
+            chats_history[sender_id].append({"role": "user", "content": msg_content})
         await event.mark_read()
         
         if wait_to_end_typing_timers[sender_id]["active"]:
@@ -243,10 +243,17 @@ async def handle_message(event):
     finally:
         busy_replying[sender_id] = False
         
-async def get_event_content(event, textOnly = False):
+async def get_event_content(event):
     content_list = []
     sender = await event.get_sender()
+    sender_id = event.chat_id if event.is_group else event.sender_id
     username = await get_display_name(sender)
+    
+    if event.is_reply:
+        reply_msg = await event.get_reply_message()
+        if reply_msg not in chats_history[sender_id]:
+            content = await get_event_content(reply_msg)
+            content_list.append({"type": "text", "User responded to message containing": content[0] if content[0]["type"] == "text" else "Document or photo"})
     
     if event.text:
         text = event.text
@@ -255,7 +262,7 @@ async def get_event_content(event, textOnly = False):
             youtube_title = get_youtube_video_title(youtube_id)
             youtube_summary = get_youtube_transcript(youtube_id)
             text += f"\n User attached video titled {youtube_title}: {youtube_summary}"
-        content_list.append({"type": "text", "text": f'{sender.username} says: {text}' if username else text})
+        content_list.append({"type": "text", f"{username} says": text})
         # content_list.append({"type": "text", "text": text})
 
     image_base64 = None
@@ -298,7 +305,7 @@ async def get_event_content(event, textOnly = False):
                 os.remove(audio_file)
             else:
                 content_list.append(
-                    {"type": "text", "text": "*User attached voice message, but you cant listen to it at the moment*"})
+                    {"type": "text", "User attached voice message, but you cant listen to it at the moment": "*voice message*"})
 
         else:
             blob = await event.download_media(bytes)
@@ -307,7 +314,7 @@ async def get_event_content(event, textOnly = False):
     if image_base64:
         img_description = await describe_image(image_base64, detailed=False)
         content_list.append(
-                {"type": "text", "text": "*User attached an image that looks like*: " + img_description})
+                {"type": "text", "User attached an image that looks like:": img_description})
         
     return content_list
 
@@ -357,7 +364,6 @@ async def estimate_response_probability(history):
     }
 
     messages = copy.deepcopy(history)
-    # messages.insert(1, probability_prompt)
     if messages and messages[0].get("role") == "system":
         messages[0] = probability_prompt
     else:
@@ -421,8 +427,8 @@ async def generate_response(history, search=False):
 async def get_sticker_by_emoji(emoji):
 
     sticker_sets = [
-        "monkeysbynorufx_by_fStikBot",
-        "Monkiz3_by_fStikBot",
+        "EdgyCatboy",
+        "Mewglestickerpack",
         "Angrykoreanartists"
     ]
 
@@ -564,7 +570,6 @@ async def check_mention(me, sender_id, event):
     if chats_history.get(sender_id) and (len(chats_history[sender_id]) > 2):
         last_msg = chats_history[sender_id][-2]
         print(f"last_mgs| {last_msg}")
-        # if last_msg.get("role") == "assistant" and not event.is_reply:
         if last_msg.get("role") == "assistant":
             return True
 
@@ -600,22 +605,47 @@ def get_plain_chat_history(msgs):
     for msg in msgs or []:
         try:
             role = msg.get("role", "").capitalize()
-            if role.lower() == "system" or not role:
+            if not role or role.lower() == "system":
                 continue
 
             content = msg.get("content")
+            text = ""
 
             if isinstance(content, str):
                 text = content.strip()
+
             elif isinstance(content, list) and content:
-                text_item = next(
-                    (item.get("text") for item in content if item.get("type") == "text"),
-                    None
-                )
-                if text_item:
-                    text = text_item.strip()
+                text_item = None
+                for item in content:
+                    if isinstance(item, dict):
+                        if item.get("type") == "text" and "text" in item:
+                            text_item = item["text"]
+                            break
+
+                if text_item is not None:
+                    if isinstance(text_item, list):
+                        parts = []
+                        for sub in text_item:
+                            if isinstance(sub, dict) and "text" in sub:
+                                parts.append(str(sub["text"]))
+                            elif isinstance(sub, str):
+                                parts.append(sub)
+                            else:
+                                parts.append(str(sub))
+                        text = " ".join(parts).strip()
+                    else:
+                        text = str(text_item).strip()
                 else:
-                    text = "*sent document or photo*"
+                    parts = []
+                    for item in content:
+                        if isinstance(item, dict):
+                            item_text = " ".join(str(v) for k, v in item.items() if k != "type")
+                            if item_text:
+                                parts.append(item_text)
+                        elif isinstance(item, str):
+                            parts.append(item)
+                    text = " ".join(parts).strip() if parts else "*sent document or photo*"
+
             else:
                 text = "*unknown message format*"
 
@@ -635,7 +665,7 @@ def sanitize_history(msgs):
 
     for msg in msgs or []:
         try:
-            role = msg.get("role", "")
+            role = msg.get("role")
             if not role:
                 continue
 
@@ -653,7 +683,14 @@ def sanitize_history(msgs):
                         continue
 
                     item_type = item.get("type", "text")
+
                     item_text = item.get("text")
+                    if item_text is None:
+                        item_text = ""
+                        for k, v in item.items():
+                            if k != "type":
+                                item_text += f"{v} "
+                        item_text = item_text.strip()
 
                     if isinstance(item_text, list):
                         parts = []
@@ -662,15 +699,14 @@ def sanitize_history(msgs):
                                 parts.append(str(sub["text"]))
                             elif isinstance(sub, str):
                                 parts.append(sub)
+                            else:
+                                parts.append(str(sub))
                         item_text = " ".join(parts).strip()
 
                     if not isinstance(item_text, str):
-                        item_text = str(item_text) if item_text is not None else ""
+                        item_text = str(item_text)
 
-                    valid_items.append({
-                        "type": item_type,
-                        "text": item_text
-                    })
+                    valid_items.append({"type": item_type, "text": item_text})
 
                 cleaned.append({"role": role, "content": valid_items})
                 continue
