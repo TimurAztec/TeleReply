@@ -46,7 +46,7 @@ CHAT_WHITE_LIST = os.getenv("CHAT_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
 HISTORY_MODEL="gpt-4.1-mini"
 PROBABILITY_MODEL="gpt-4.1-nano"
-HISTORY_TOKENS=1000
+HISTORY_TOKENS=777
 client = TelegramClient("session", int(API_ID), API_HASH)
 me = None
 openai_client = AsyncOpenAI(
@@ -62,8 +62,8 @@ NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
 WAIT_TIMER = 5.0
 SPEECH_SPEED = 15
-temperature=0.5
-presence_penalty=0.9
+temperature=0.777
+presence_penalty=1
 frequency_penalty=1
 top_p=0.5
 # model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
@@ -256,6 +256,7 @@ async def get_event_content(event, textOnly = False):
             youtube_summary = get_youtube_transcript(youtube_id)
             text += f"\n User attached video titled {youtube_title}: {youtube_summary}"
         content_list.append({"type": "text", "text": f'{sender.username} says: {text}' if username else text})
+        # content_list.append({"type": "text", "text": text})
 
     image_base64 = None
 
@@ -322,8 +323,7 @@ async def summarize_history(sender_id):
         response = await openai_client.chat.completions.create(
             model=HISTORY_MODEL,
             messages=[summary_prompt, {"role": "user", "content": history_text}],
-            max_tokens=250,
-            temperature=0.33
+            max_tokens=200
         )
         summary = response.choices[0].message.content.strip()
         print(f"History summary: {summary}")
@@ -350,7 +350,8 @@ async def estimate_response_probability(history):
         "content": (
             "You are a classifier. "
             "Decide if the assistant should respond. "
-            "Output only one number between 0 and 1, no text, no punctuation."
+            "Output only one number between 0 and 1, no text, no punctuation. "
+            "Do not get involved into dialog between other users."
         )
     }
 
@@ -393,7 +394,7 @@ async def generate_response(history, search=False):
         response = await openai_client.chat.completions.create(
             model=model_id,
             messages=sanitize_history(history),
-            max_tokens=222,
+            max_tokens=200,
             temperature=temperature,
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
@@ -403,7 +404,7 @@ async def generate_response(history, search=False):
         response = await openai_client.chat.completions.create(
             model="gpt-4o-search-preview",
             messages=sanitize_history(history),
-            max_tokens=222
+            max_tokens=200
         )
 
     response_text = response.choices[0].message.content.strip()
@@ -444,7 +445,7 @@ async def describe_image(image_base64, detailed=False):
             {"role": "system", "content": "Describe the image(s) provided in a way that another language model can understand and respond appropriately."},
             {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}}]}
         ],
-        max_tokens=222
+        max_tokens=200
     )
     return description_response.choices[0].message.content.strip()
 
@@ -466,6 +467,8 @@ async def respond(first_msg: bool, event, history, search=False):
     response_text = await generate_response(history, search)
 
     print(f"Raw response: {response_text}")
+    
+    response_text = re.sub(r'^[\w@]+ says:\s*', '', response_text, flags=re.IGNORECASE).strip()
 
     if "/stop-conversation" in response_text:
         raise ValueError("Conversation is over.")
