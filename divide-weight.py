@@ -7,7 +7,7 @@ input_file = "fine_tuning_data.jsonl"
 output_file = "edit_fine_tuning_data.jsonl"
 
 # Set the token limit
-TOKEN_LIMIT = 333333
+TOKEN_LIMIT = 999999
 MODEL_NAME = "gpt-4o-mini-2024-07-18"
 
 # Initialize tokenizer

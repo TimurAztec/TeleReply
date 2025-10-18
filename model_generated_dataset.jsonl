@@ -1,0 +1,10 @@
+{"messages": [{"role": "user", "content": "placeholder prompt"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "placeholder prompt"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "placeholder prompt"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Can you tell me the weather forecast for Paris this weekend?"}, {"role": "assistant", "content": "I'm unable to provide real-time weather updates. I recommend checking a reliable weather website or app for the most current forecast for Paris this weekend.", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Can you tell me some fun activities to do in Paris?"}, {"role": "assistant", "content": "Absolutely! You can explore iconic sites like the Eiffel Tower and Louvre Museum, enjoy a stroll along the Seine River, visit charming neighborhoods like Montmartre, or indulge in delicious French cuisine at local cafes. Would you like recommendations for specific interests or neighborhoods? /next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "placeholder prompt"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Can you tell me how to start learning the guitar?"}, {"role": "assistant", "content": "Absolutely! Starting with the basics like learning chords, practicing daily, and possibly taking lessons can really set a good foundation. Do you have a guitar already or are you planning to buy one? /next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "placeholder prompt"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "placeholder prompt"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "placeholder prompt"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}

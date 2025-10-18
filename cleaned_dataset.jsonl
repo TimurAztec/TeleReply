@@ -1,0 +1,1621 @@
+{"messages": [{"role": "user", "content": "Лол"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "..."}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "12345"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Кек"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "гы"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ахах"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Баян"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ну"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ага"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "неа"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "лолшто"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ээээ"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ыыы"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "хз"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ничё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "фигня"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "мда"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ясно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ок"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "о"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ок"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "збс"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Та норм"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "да"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "нет"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "пф"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ужас"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "пффф"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "че"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "что"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "кто"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "зачем"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "как"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "где"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ага"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ну да"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "аниме топ"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "лолкик"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "гыгы"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ахаха"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ээээээ"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "мем"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "не знаю"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "всё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "закончили"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "конец"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "фильм"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "книга"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "код"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "майнкрафт"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "гта"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "лоллол"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "уфф"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "угу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "мне лень"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "спать хочу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "я хз"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "яснопонятно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "пердак"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "кринж"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "чё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "дичь"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "бред"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "какое мне дело"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "смешно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "тебе весело?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ха-ха"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "чё кого"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ой"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "каво"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "уиии"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "гыыы"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "угу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ясненько"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ну такое"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "по кайфу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "чет"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "эх"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ну ок"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "че почем"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "погода как"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "здорово"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "че делаешь"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "эээ"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "мгм"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "че там"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "все норм?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "давай"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ну окей"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "забей"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "серьезно?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ну"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "та да"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "и что?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ну и что?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "а ты кто?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "че по чем"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "пошли"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ладно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "окей"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "походу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "хаах"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "жиза"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "пож"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "лолчё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "кекв"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "бебра"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "пиздец"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Иди спи"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Выключи бота"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "А, ок"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Я думаю"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Крч"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Кстати"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну в общем"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Взагалі"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Їбать крч"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Їбать крч"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Слушай"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче кажу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Так вот"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну ладно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "В общем"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Честно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Смотри"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Знаешь"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типа того"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Вообще"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче говоря"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну и что"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ладно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Честно говоря"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "В общем-то"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну короче"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Слушай, да"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Значит"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ж"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але правда"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але реально"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але чесно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але воно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але типу того"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але короче"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ж типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ж правда"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ну воно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але реально ж"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але чесно кажучи"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але воно так"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але типу ясно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але все ж"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ж ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але короче кажучи"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "В принципі"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Якось так"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Скажу чесно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Можливо"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну сам розумієш"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Чесно кажучи"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типу того"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ж ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "В общем"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче кажу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типу ясно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну воно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але реально"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Слушай"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Взагалі"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Честно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Кстати"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну в общем"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ладно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Якось воно так"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну да"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типа ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "В общем-то"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Смотри"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Знаешь"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче говоря"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну и что"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ладно, ок"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Честно говоря, ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Мда"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але в принципі"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну типа ясно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Вообще-то"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Слушай, ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типа воно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але чесно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну да, типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "В общем, ясно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче, ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Слушай, типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну реально"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ммм, ладно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але типу того"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Воно якось"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну слушай"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але в общем"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типа ясно, ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ладно, короче"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну в принципі"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Мда, типу"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Якось воно так"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Чесно, ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Короче, ясно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну сам розумієш"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Типа реально"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Але ж воно"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "В общем, ну"}, {"role": "assistant", "content": "/next-msg", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ладно, типу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну всё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Хватит"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Стоп"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Довольно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Закрывай"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Пока"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ладно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ха-ха, всё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Кончилось"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Это конец"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Финиш"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Пошли спать"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Закончили дело"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Окончено"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Все, хватит"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Все"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Хватит"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Стоп"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Конец"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Закрывай"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Пока"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ладно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Кончилось"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Финиш"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "123"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "..."}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "?!?"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Кек"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "гы"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ахах"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Баян"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну всё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ха-ха, всё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Довольно"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Окончено"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Выключай"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Спи"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Закончено"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Кончилось дело"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Это всё"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну хватит"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Закрыто"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Все, хватит"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ха-ха, стоп"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Закрываем"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Пошли спать"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну всё, конец"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Фух"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Эх"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Ну всё, конец истории"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Это конец разговора"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Хватит уже"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Все, конец"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "Закрыли"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "фыва"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "йцукен"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "123abc"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "!@#$%"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "блаблабла"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "кириллица"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "asdfsadf"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "лол123"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "qwertyuiop"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "zzzxxxccc"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "абвгд"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "1234567890"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "!!??!!"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "хрень"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "бумбах"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "фшгшф"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "wqerqwe"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "тест123"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "йййййй"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "asdfghjkl"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "qwe123asd"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "бубубу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "йцуйцу"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ghjklkjh"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "оооооо"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "!!!???!!!"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "123abc456"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "йцук123"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "блабла123"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "asdf123"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "фффффф"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "шшшшшш"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "!!@@##$$"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "qwe!@#"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "абв123"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "бббббб"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "111222"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "аааааа"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "zzz111"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "qazwsx"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "xswqaz"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ffddss"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "ghjkl"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "plokijuh"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "nm,./"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "><><><"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{"messages": [{"role": "user", "content": "l;kjhgf"}, {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}]}
+{
+    "messages": [
+      {
+        "role": "user",
+        "content": "Яке джерело?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір інформацію"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Найди"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Де можна?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Знайди мені"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай дані"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що тут?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Глянь"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Знайди інформацію"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Скажи факт"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що за тема?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Які варіанти?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукати"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що скажеш?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що відомо?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Знайди будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Інфо про тему"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір це"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що про це?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукати"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Знайди мені"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Яке джерело?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Які дані?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що скажеш?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір для мене"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Яке джерело?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що відомо?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір інформацію"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукати"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Інфо про це"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай мені"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай мені"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Знайди інформацію"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Можеш знайти?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай результат"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай посилання"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір інформацію"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай результат"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Давай знайдемо"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Хочу факт"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Хочу факт"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір це"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай приклад"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Давай перевіримо"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Знайди інформацію"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Можеш знайти?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Які дані?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що знайшов?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Хочу подивитись"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Давай перевіримо"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай результат"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Спробуй знайти"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Подивись"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай посилання"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що про це?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Подивись"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір для мене"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай результат"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Знайди будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай посилання"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що про це?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай посилання будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що скажеш?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "А як щодо?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що про це?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Покажи мені"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай результат"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай посилання будь ласка"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що відомо?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір для мене"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Де це?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошук"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Яке джерело?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що скажеш?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Покажи мені"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошук"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Перевір це"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Хочу подивитись"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Інфо про це"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Інфо про це"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Глянь"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Де можна?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Подивись"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Інформація"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай результат"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Спробуй знайти"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Дай інформацію"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Хочу факт"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Де можна?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Пошукай"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Що відомо?"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Глянь"
+      },
+      {
+        "role": "assistant",
+        "content": "/search",
+        "weight": 0.5
+      }
+    ]
+  }

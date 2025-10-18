@@ -62,8 +62,8 @@ NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
 WAIT_TIMER = 5.0
 SPEECH_SPEED = 15
-temperature=0.777
-presence_penalty=1
+temperature=0.999
+presence_penalty=1.11
 frequency_penalty=1
 top_p=0.5
 # model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
@@ -247,6 +247,7 @@ async def get_event_content(event):
     content_list = []
     sender = await event.get_sender()
     sender_id = event.chat_id if event.is_group else event.sender_id
+    pprint(sender)
     username = await get_display_name(sender)
     
     if event.is_reply:
@@ -356,6 +357,7 @@ async def estimate_response_probability(history):
         "role": "system",
         "content": (
             "You are a classifier. "
+            "Your name is Штучний Хохол (aka @TimurIsHere). "
             "Pay attention to context. "
             "Do not get involved into dialog between other users. "
             "Decide if the assistant should respond. "
@@ -429,7 +431,8 @@ async def get_sticker_by_emoji(emoji):
     sticker_sets = [
         "EdgyCatboy",
         "Mewglestickerpack",
-        "Angrykoreanartists"
+        "Angrykoreanartists",
+        "Almarts27hamsters_by_fStikBot"
     ]
 
     random.shuffle(sticker_sets)

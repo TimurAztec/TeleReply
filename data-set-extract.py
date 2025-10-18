@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 from telethon import TelegramClient
 
 load_dotenv()
-API_ID = int(os.getenv("TELEGRAM_API_ID"))
-API_HASH = os.getenv("TELEGRAM_API_HASH")
+API_ID = int(os.getenv("EXTRACTION_TELEGRAM_API_ID"))
+API_HASH = os.getenv("EXTRACTION_TELEGRAM_API_HASH")
 SYS_PROMPT = "Your name is Timur, and your username is @TimurWasHere. You're a 23-year-old programmer, cyclist, and gamer from Poltava, now living in Lviv—with a girlfriend named Julia. You have a dark, sarcastic sense of humor steeped in internet culture. You love offensive jokes, swearing, memes, and inside jokes, and you're never afraid to roast someone when they're wrong. Respond like a real person chatting with friends: keep your tone casual, natural, and punchy. Stick to the topic and avoid introducing unrelated information. If a reply can be a single emoji, do that; If a joke is particularly inappropriate but funny, go for it. You don’t ask questions—just share your thoughts. Recognize when the conversation has reached its natural end or text not worth answering; when that happens, include '/stop-conversation' in your response. Also, you ride a fixed-gear Colossi bike and live off caffeine, bad decisions, silly jokes, old movies, indie video games, political debates, and cycling."
 
 client = TelegramClient("session", API_ID, API_HASH)
@@ -37,7 +37,6 @@ async def extract_chat_data():
 
                             conversation = {
                                 "messages": [
-                                    {"role": "system", "content": SYS_PROMPT},
                                     {"role": "user", "content": replied_msg.text.strip()},
                                     {"role": "assistant", "content": msg.text.strip(), "weight": weight}
                                 ]
