@@ -1,36 +1,26 @@
 import base64
-import copy
 import io
 import os
 import re
 import random
-import subprocess
 from pprint import pprint
 import tempfile
 import threading
 
 import ffmpeg
-import tiktoken
 from PIL import Image
 from datetime import datetime, timedelta
-import openai
+import anthropic
 import asyncio
-from openai import AsyncOpenAI
+from anthropic import AsyncAnthropic
 from telethon import TelegramClient, events
 from collections import defaultdict
 from dotenv import load_dotenv
 from telethon.tl.functions.account import GetAuthorizationsRequest
 from telethon.tl.functions.messages import SetTypingRequest, GetStickerSetRequest
-from telethon.tl.types import SendMessageTypingAction, SendMessageRecordAudioAction, DocumentAttributeAudio, \
-    InputStickerSetShortName
+from telethon.tl.types import SendMessageTypingAction, InputStickerSetShortName
 from youtube import extract_youtube_video_id, get_youtube_video_title, summarize_youtube_transcript, \
     get_youtube_transcript
-whisper = None
-# try:
-#     import whisper
-#     whisper = whisper
-# except ImportError as e:
-#     print("Could not import whisper module!")
 
 EMOJI_REGEX = re.compile(
     r'^[\U0001F3FB-\U0001F3FF]?[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF'
@@ -41,39 +31,43 @@ EMOJI_REGEX = re.compile(
 load_dotenv()
 API_ID = os.getenv("TELEGRAM_API_ID")
 API_HASH = os.getenv("TELEGRAM_API_HASH")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CHAT_WHITE_LIST = os.getenv("CHAT_WHITE_LIST").split(',')
 SYS_PROMPT = os.getenv("SYS_PROMPT")
-HISTORY_MODEL="gpt-4.1-mini"
-PROBABILITY_MODEL="gpt-4.1-nano"
-HISTORY_TOKENS=777
+HISTORY_MODEL = "claude-haiku-4-5"
+PROBABILITY_MODEL = "claude-haiku-4-5"
+HISTORY_TOKENS = 777
+
+# Python 3.10+ deprecated (and 3.14 removed) auto-creating a loop when none
+# exists for the main thread, so asyncio.get_event_loop() now raises here.
+# Create one explicitly and register it before anything else touches asyncio.
+try:
+    main_loop = asyncio.get_event_loop()
+except RuntimeError:
+    main_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(main_loop)
+
 client = TelegramClient("session", int(API_ID), API_HASH)
 me = None
-openai_client = AsyncOpenAI(
-  api_key=OPENAI_API_KEY
+anthropic_client = AsyncAnthropic(
+  api_key=ANTHROPIC_API_KEY
 )
 
 reply_enabled = True
 busy_replying = defaultdict(lambda: False)
 wait_to_end_typing_timers = defaultdict(list)
 chats_history = defaultdict(list)
+chats_summaries = defaultdict(str)
 
 NUM_PREVIOUS_MESSAGES = 10
 TYPING_SPEED = 10
 WAIT_TIMER = 5.0
-SPEECH_SPEED = 15
-temperature=0.999
-presence_penalty=1.11
-frequency_penalty=1
-top_p=0.5
-# model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B6C081Io:ckpt-step-946"
-model_id="ft:gpt-4o-mini-2024-07-18:personal:timur:B5qD7QVU"
-
-main_loop = asyncio.get_event_loop()
+temperature = 0.999
+model_id = "claude-haiku-4-5"
 
 @client.on(events.NewMessage(incoming=False))
 async def process_out_message(event):
-    global reply_enabled, me, temperature, presence_penalty, frequency_penalty, top_p
+    global reply_enabled, me, temperature
     sender_id = event.chat_id if event.is_group else event.sender_id
     print(f"Out | Chat id: {event.chat_id} | Text: {event.text}")
 
@@ -85,28 +79,15 @@ async def process_out_message(event):
             reply_enabled = False
             await event.reply("❌ Auto-reply is OFF.")
 
-        param_match = re.match(r'set-(temperature|top_p|presence_penalty|frequency_penalty):\s*([0-9]*\.?[0-9]+)',
-                               event.text, re.IGNORECASE)
+        param_match = re.match(r'set-temperature:\s*([0-9]*\.?[0-9]+)', event.text, re.IGNORECASE)
         if param_match:
-            param_name = param_match.group(1)
-            param_value = float(param_match.group(2))
-
-            if param_name == "temperature":
-                temperature = param_value
-            elif param_name == "top_p":
-                top_p = param_value
-            elif param_name == "presence_penalty":
-                presence_penalty = param_value
-            elif param_name == "frequency_penalty":
-                frequency_penalty = param_value
-
-            await event.reply(f"✅ {param_name} set to {param_value}")
+            temperature = float(param_match.group(1))
+            await event.reply(f"✅ temperature set to {temperature}")
             return
     elif event.chat_id != me.id:
         if f"@{me.username}" in event.text:
-            # if str(event.chat_id) in CHAT_WHITE_LIST:
-                await handle_message(event)
-                return
+            await handle_message(event)
+            return
 
         if event.text.lower() == "reply-add" and not str(event.chat_id) in CHAT_WHITE_LIST:
             CHAT_WHITE_LIST.append(str(event.chat_id))
@@ -118,60 +99,10 @@ async def process_out_message(event):
             if event.text:
                 chats_history[sender_id].append({"role": "assistant", "content": [{"type": "text", "text": event.text}]})
 
-async def respond_voice(event, text):
-    user_id = event.chat_id
-
-    await simulate_voice_recording(event, text)
-
-    response = openai.audio.speech.create(
-        model="tts-1",
-        voice="alloy",
-        input=text
-    )
-
-    raw_audio = io.BytesIO(response.content)
-    raw_audio.seek(0)
-
-    converted_audio = io.BytesIO()
-
-    process = subprocess.run(
-        [
-            "ffmpeg", "-y", "-i", "pipe:0",
-            "-c:a", "libopus", "-b:a", "32k", "-vn",
-            "-f", "ogg", "pipe:1"
-        ],
-        input=raw_audio.read(),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-
-    if process.returncode != 0:
-        print("FFmpeg error:", process.stderr.decode())
-        return
-
-    converted_audio.write(process.stdout)
-    converted_audio.seek(0)
-    converted_audio.name = "voice.ogg"
-
-    if converted_audio.getbuffer().nbytes == 0:
-        print("Converted audio file is empty!")
-        return
-
-    duration = round(len(text) / SPEECH_SPEED)
-
-    await client.send_file(
-        user_id,
-        converted_audio,
-        voice_note=True,
-        reply_to=event.message,
-        attributes=[DocumentAttributeAudio(duration=int(duration), voice=True)]
-    )
-
 @client.on(events.NewMessage(incoming=True))
 async def process_in_message(event):
     print(f"Incoming | Chat id: {event.chat_id} | Text: {event.text}")
 
-    # if str(event.chat_id) not in CHAT_WHITE_LIST or event.chat_id == me.id or (event.text == '' and not (event.photo or event.document or event.voice)):
     if (event.is_group and (str(event.chat_id) not in CHAT_WHITE_LIST)) or (event.text == '' and not (event.photo or event.document or event.voice)):
         return
 
@@ -187,14 +118,15 @@ async def process_in_message(event):
     await handle_message(event)
 
 
-async def handle_message(event):
-    global me, reply_enabled, busy_replying, temperature, frequency_penalty, presence_penalty, top_p
-    sender = await event.get_sender()
-    system_message = {
-        "role": "system",
-        "content": SYS_PROMPT
-    }
+def build_system_prompt(sender_id):
+    if chats_summaries[sender_id]:
+        return SYS_PROMPT + "\n\nPrevious conversation summary: " + chats_summaries[sender_id]
+    return SYS_PROMPT
 
+
+async def handle_message(event):
+    global me, reply_enabled, busy_replying, temperature
+    sender = await event.get_sender()
     sender_id = event.chat_id if event.is_group else event.sender_id
 
     active = await check_active_sessions()
@@ -208,17 +140,19 @@ async def handle_message(event):
                 if msg.sender_id and msg.sender_id != me.id:
                     chats_history[sender_id].append({"role": "user", "content": await get_event_content(msg)})
                 if msg.sender_id and msg.sender_id == me.id:
-                    chats_history[sender_id].append({"role": "assistant", "content": [{"type": "text", "text": msg.text}]})
+                    chats_history[sender_id].append({"role": "assistant", "content": [{"type": "text", "text": msg.text or ""}]})
             chats_history[sender_id].reverse()
-            chats_history[sender_id].insert(0, system_message)
+            # Claude requires the conversation to start with a "user" turn.
+            while chats_history[sender_id] and chats_history[sender_id][0]["role"] != "user":
+                chats_history[sender_id].pop(0)
         else:
             msg_content = await get_event_content(event)
-            if count_tokens(get_plain_chat_history(chats_history[sender_id]), HISTORY_MODEL) >= (HISTORY_TOKENS):
+            if await count_tokens(get_plain_chat_history(chats_history[sender_id]), HISTORY_MODEL) >= (HISTORY_TOKENS):
                 await summarize_history(sender_id)
-                
+
             chats_history[sender_id].append({"role": "user", "content": msg_content})
         await event.mark_read()
-        
+
         if wait_to_end_typing_timers[sender_id]["active"]:
             return
 
@@ -226,7 +160,7 @@ async def handle_message(event):
         if event.is_group and not mention:
             print(f"Not mentioned")
             return
-        
+
         if busy_replying[sender_id]:
             print(f"Busy!")
             return
@@ -234,7 +168,7 @@ async def handle_message(event):
         busy_replying[sender_id] = True
         await respond(first_msg=True, event=event, history=chats_history[sender_id])
 
-    except openai._exceptions.RateLimitError:
+    except anthropic.RateLimitError:
         print("Quota limit exceeded or rate limit error")
         return
     except Exception as e:
@@ -242,20 +176,21 @@ async def handle_message(event):
         return
     finally:
         busy_replying[sender_id] = False
-        
+
 async def get_event_content(event):
     content_list = []
     sender = await event.get_sender()
     sender_id = event.chat_id if event.is_group else event.sender_id
     pprint(sender)
     username = await get_display_name(sender)
-    
+
     if event.is_reply:
         reply_msg = await event.get_reply_message()
         if reply_msg not in chats_history[sender_id]:
             content = await get_event_content(reply_msg)
-            content_list.append({"type": "text", "User responded to message containing": content[0] if content[0]["type"] == "text" else "Document or photo"})
-    
+            summary = content[0]["text"] if content and content[0]["type"] == "text" else "Document or photo"
+            content_list.append({"type": "text", "text": f"User responded to message containing: {summary}"})
+
     if event.text:
         text = event.text
         youtube_id = extract_youtube_video_id(event.text)
@@ -263,10 +198,10 @@ async def get_event_content(event):
             youtube_title = get_youtube_video_title(youtube_id)
             youtube_summary = get_youtube_transcript(youtube_id)
             text += f"\n User attached video titled {youtube_title}: {youtube_summary}"
-        content_list.append({"type": "text", f"{username} says": text})
-        # content_list.append({"type": "text", "text": text})
+        content_list.append({"type": "text", "text": f"{username} says: {text}"})
 
     image_base64 = None
+    media_type = "image/jpeg"
 
     if event.photo or event.document:
         mime_type = getattr(event.document, "mime_type", None)
@@ -279,8 +214,9 @@ async def get_event_content(event):
         elif mime_type in ["video/webm", "video/mp4"]:
             blob = await event.download_media(bytes)
             fmt = "webm" if "webm" in mime_type else "mp4"
+            out = None
 
-            try: 
+            try:
                 with tempfile.NamedTemporaryFile(suffix=f".{fmt}") as tmp:
                     tmp.write(blob)
                     tmp.flush()
@@ -294,53 +230,45 @@ async def get_event_content(event):
             except ffmpeg.Error as e:
                 print("FFmpeg error:", e.stderr.decode(errors="ignore"))
 
-            image_base64 = base64.b64encode(out).decode("utf-8")
+            if out:
+                image_base64 = base64.b64encode(out).decode("utf-8")
 
         elif mime_type == "audio/ogg":
-            if whisper:
-                audio_file = await event.download_media()
-                model = whisper.load_model("base")
-                transcribed_text = model.transcribe(audio_file)
-                print(f"Audio transcription: {transcribed_text.get('text')}")
-                # history.append({"role": "user", "content": transcribed_text.get('text')})
-                os.remove(audio_file)
-            else:
-                content_list.append(
-                    {"type": "text", "User attached voice message, but you cant listen to it at the moment": "*voice message*"})
+            content_list.append(
+                {"type": "text", "text": "User attached voice message, but you cant listen to it at the moment"})
 
         else:
             blob = await event.download_media(bytes)
             image_base64 = base64.b64encode(blob).decode("utf-8")
+            if mime_type in ["image/jpeg", "image/png", "image/gif", "image/webp"]:
+                media_type = mime_type
 
     if image_base64:
-        img_description = await describe_image(image_base64, detailed=False)
+        img_description = await describe_image(image_base64, media_type)
         content_list.append(
-                {"type": "text", "User attached an image that looks like:": img_description})
-        
+                {"type": "text", "text": f"User attached an image that looks like: {img_description}"})
+
+    if not content_list:
+        content_list.append({"type": "text", "text": "*empty message*"})
+
     return content_list
 
 async def summarize_history(sender_id):
-    summary_prompt = {
-        "role": "system",
-        "content": "Summarize this conversation while keeping key details relevant to the discussion."
-    }
-
     history_text = get_plain_chat_history(chats_history[sender_id])
 
     try:
-        response = await openai_client.chat.completions.create(
+        response = await anthropic_client.messages.create(
             model=HISTORY_MODEL,
-            messages=[summary_prompt, {"role": "user", "content": history_text}],
-            max_tokens=200
+            max_tokens=200,
+            system="Summarize this conversation while keeping key details relevant to the discussion.",
+            messages=[{"role": "user", "content": history_text}]
         )
-        summary = response.choices[0].message.content.strip()
+        summary = next(b.text for b in response.content if b.type == "text").strip()
         print(f"History summary: {summary}")
-        chats_history[sender_id] = [
-            {"role": "system", "content": SYS_PROMPT},
-            {"role": "system", "content": "Previous conversation Summary: " + summary}
-            ]
+        chats_summaries[sender_id] = summary
+        chats_history[sender_id] = []
 
-    except openai._exceptions.RateLimitError:
+    except anthropic.RateLimitError:
         print("Rate limit exceeded, skipping history summarization.")
     except Exception as e:
         print(f"Error summarizing history: {e}")
@@ -352,33 +280,30 @@ async def convert_to_jpeg(blob):
     image.save(buffer, format="JPEG")
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-async def estimate_response_probability(history):
-    probability_prompt = {
-        "role": "system",
-        "content": (
-            "You are a classifier. "
-            "Your name is Штучний Хохол (aka @TimurIsHere). "
-            "Pay attention to context. "
-            "Do not get involved into dialog between other users. "
-            "Decide if the assistant should respond. "
-            "Output only one number between 0 and 1, no text, no punctuation."
-        )
-    }
+async def estimate_response_probability(history, sender_id):
+    system_prompt = (
+        "You are a classifier. "
+        "Your name is Штучний Хохол (aka @TimurIsHere). "
+        "Pay attention to context. "
+        "Do not get involved into dialog between other users. "
+        "Decide if the assistant should respond. "
+        "Output only one number between 0 and 1, no text, no punctuation."
+    )
 
-    messages = copy.deepcopy(history)
-    if messages and messages[0].get("role") == "system":
-        messages[0] = probability_prompt
-    else:
-        messages.insert(0, probability_prompt)
+    messages = sanitize_history(history)
+    if not messages:
+        return False
 
     for attempt in range(2):
         try:
-            response = await openai_client.chat.completions.create(
+            response = await anthropic_client.messages.create(
                 model=PROBABILITY_MODEL,
-                messages=sanitize_history(messages)
+                max_tokens=10,
+                system=system_prompt,
+                messages=messages
             )
 
-            text = (response.choices[0].message.content or "").strip()
+            text = next((b.text for b in response.content if b.type == "text"), "").strip()
 
             match = re.search(r"\b\d*\.?\d+\b", text)
             if match:
@@ -389,7 +314,7 @@ async def estimate_response_probability(history):
         except Exception as e:
             print(f"[estimate_response_probability] attempt {attempt+1} failed:", e)
 
-        messages[0]["content"] = (
+        system_prompt = (
             "Output only a number between 0 and 1. "
             "If unsure, output 0. No text, no explanation."
         )
@@ -397,27 +322,23 @@ async def estimate_response_probability(history):
 
     return False
 
-async def generate_response(history, search=False):
+async def generate_response(history, sender_id, search=False):
     global model_id
 
-    if not search:
-        response = await openai_client.chat.completions.create(
-            model=model_id,
-            messages=sanitize_history(history),
-            max_tokens=200,
-            temperature=temperature,
-            presence_penalty=presence_penalty,
-            frequency_penalty=frequency_penalty,
-            top_p=top_p
-        )
-    else:
-        response = await openai_client.chat.completions.create(
-            model="gpt-4o-search-preview",
-            messages=sanitize_history(history),
-            max_tokens=200
-        )
+    kwargs = dict(
+        model=model_id,
+        max_tokens=200,
+        temperature=temperature,
+        system=build_system_prompt(sender_id),
+        messages=sanitize_history(history),
+    )
 
-    response_text = response.choices[0].message.content.strip()
+    if search:
+        kwargs["tools"] = [{"type": "web_search_20250305", "name": "web_search"}]
+
+    response = await anthropic_client.messages.create(**kwargs)
+
+    response_text = "".join(b.text for b in response.content if b.type == "text").strip()
 
     response_text = re.sub(r"https?://\S+|www\.\S+", "", response_text)
     response_text = response_text.replace("@TimurWasHere", "")
@@ -449,16 +370,16 @@ async def get_sticker_by_emoji(emoji):
 
     return None
 
-async def describe_image(image_base64, detailed=False):
-    description_response = await openai_client.chat.completions.create(
-        model= "gpt-4o" if detailed else "gpt-4o-mini-2024-07-18",
+async def describe_image(image_base64, media_type="image/jpeg"):
+    description_response = await anthropic_client.messages.create(
+        model=model_id,
+        max_tokens=200,
+        system="Describe the image(s) provided in a way that another language model can understand and respond appropriately.",
         messages=[
-            {"role": "system", "content": "Describe the image(s) provided in a way that another language model can understand and respond appropriately."},
-            {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "auto"}}]}
-        ],
-        max_tokens=200
+            {"role": "user", "content": [{"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_base64}}]}
+        ]
     )
-    return description_response.choices[0].message.content.strip()
+    return next(b.text for b in description_response.content if b.type == "text").strip()
 
 async def get_display_name(sender):
     if sender.first_name:
@@ -474,16 +395,17 @@ def is_single_emoji(text):
     return bool(EMOJI_REGEX.fullmatch(text))
 
 async def respond(first_msg: bool, event, history, search=False):
+    sender_id = event.chat_id if event.is_group else event.sender_id
     pprint(history)
-    response_text = await generate_response(history, search)
+    response_text = await generate_response(history, sender_id, search)
 
     print(f"Raw response: {response_text}")
-    
+
     response_text = re.sub(r'^[\w@]+ says:\s*', '', response_text, flags=re.IGNORECASE).strip()
 
     if "/stop-conversation" in response_text:
         raise ValueError("Conversation is over.")
-    
+
     if "/search" in response_text:
         await respond(True, event, history, True)
         return
@@ -511,11 +433,8 @@ async def respond(first_msg: bool, event, history, search=False):
         last_symbol_emoji = response_text[-1]
         response_text = response_text[:-1]
 
-    if whisper and random.choice([False, False, True, False, False]):
-        await respond_voice(event, response_text)
-    else:
-        await simulate_typing(event, response_text or '')
-        await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
+    await simulate_typing(event, response_text or '')
+    await (event.reply(response_text) if event.is_group and first_msg else event.respond(response_text))
 
     if last_symbol_emoji:
         file = await get_sticker_by_emoji(last_symbol_emoji)
@@ -536,24 +455,14 @@ async def simulate_typing(event, text):
     except Exception as e:
         print(f"Error while sending typing action: {e}")
 
-async def simulate_voice_recording(event, text):
-    chat_id = event.chat_id
-    try:
-        await client(SetTypingRequest(chat_id, SendMessageRecordAudioAction()))
-        speech_time = round(len(text) / SPEECH_SPEED)
-        print(f"Voice recording for: {speech_time}")
-        await asyncio.sleep(speech_time)
-    except Exception as e:
-        print(f"Error while sending typing action: {e}")
-
 
 async def check_mention(me, sender_id, event):
     if event.forward:
         fwd = event.fwd_from
-        
+
         if fwd.from_id and getattr(fwd.from_id, 'channel_id', None):
             return True
-    
+
     if event.is_reply:
         msg = await event.get_reply_message()
         if msg.from_id and msg.from_id.user_id == me.id:
@@ -576,7 +485,7 @@ async def check_mention(me, sender_id, event):
         if last_msg.get("role") == "assistant":
             return True
 
-    return await estimate_response_probability(chats_history[sender_id])
+    return await estimate_response_probability(chats_history[sender_id], sender_id)
 
 async def check_active_sessions():
     global client
@@ -597,10 +506,16 @@ async def check_active_sessions():
 
     return False
 
-def count_tokens(text, model="gpt-4o-mini-2024-07-18"):
-    encoding = tiktoken.get_encoding("o200k_base")
-    num_tokens = len(encoding.encode(text))
-    return num_tokens
+async def count_tokens(text, model=HISTORY_MODEL):
+    try:
+        response = await anthropic_client.messages.count_tokens(
+            model=model,
+            messages=[{"role": "user", "content": text or "(empty)"}]
+        )
+        return response.input_tokens
+    except Exception as e:
+        print(f"Error counting tokens: {e}")
+        return 0
 
 def get_plain_chat_history(msgs):
     lines = []
@@ -658,18 +573,18 @@ def get_plain_chat_history(msgs):
             lines.append(f"Error parsing message: {e}")
 
     return "\n".join(lines)
-    
+
 def end_wait_timer(sender_id, event):
     wait_to_end_typing_timers[sender_id]["active"] = False
     asyncio.run_coroutine_threadsafe(handle_message(event), main_loop)
-    
+
 def sanitize_history(msgs):
     cleaned = []
 
     for msg in msgs or []:
         try:
             role = msg.get("role")
-            if not role:
+            if not role or role == "system":
                 continue
 
             content = msg.get("content")
@@ -711,13 +626,14 @@ def sanitize_history(msgs):
 
                     valid_items.append({"type": item_type, "text": item_text})
 
-                cleaned.append({"role": role, "content": valid_items})
+                if valid_items:
+                    cleaned.append({"role": role, "content": valid_items})
                 continue
 
             cleaned.append({"role": role, "content": str(content)})
 
         except Exception as e:
-            cleaned.append({"role": "system", "content": f"*error cleaning message: {e}*"})
+            print(f"*error cleaning message: {e}*")
 
     return cleaned
 
@@ -736,4 +652,4 @@ if __name__ == "__main__":
     # id = extract_youtube_video_id("https://www.youtube.com/watch?v=T23g5f6XmS8")
     # print(id)
     with client:
-        client.loop.run_until_complete(main())
+        main_loop.run_until_complete(main())

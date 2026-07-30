@@ -1,11 +1,14 @@
 import os
 import re
 import requests
-import openai
+import anthropic
 from bs4 import BeautifulSoup
 from youtube_transcript_api import YouTubeTranscriptApi
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
 
 def extract_youtube_video_id(url):
     pattern = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})"
@@ -37,25 +40,18 @@ def get_youtube_transcript(video_id):
 
 
 def summarize_youtube_transcript(text):
-    conversation = [
-        {'role': 'system', 'content': 'Summarize the YouTube transcript in bullet points, highlighting key insights:'}]
-    max_chunk_size = 2048 - len(conversation[0]['content']) - 100
+    max_chunk_size = 1800
     chunks = split_text_into_chunks(text, max_chunk_size)
     summarized_chunks = []
 
-    total_tokens_used = 0
-
     for chunk in chunks:
-        conversation.append({'role': 'user', 'content': chunk})
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=conversation,
-            max_tokens=100
+        response = anthropic_client.messages.create(
+            model="claude-haiku-4-5",
+            max_tokens=100,
+            system="Summarize the YouTube transcript in bullet points, highlighting key insights:",
+            messages=[{"role": "user", "content": chunk}]
         )
-        api_usage = response['usage']
-        print('Total token consumed: {0}'.format(api_usage['total_tokens']))
-
-        summary = response.choices[0].message.content.strip()
+        summary = next(b.text for b in response.content if b.type == "text").strip()
         summarized_chunks.append(summary)
 
     return " ".join(summarized_chunks)
@@ -77,4 +73,3 @@ def split_text_into_chunks(text, max_chunk_size):
         chunks.append(" ".join(current_chunk))
 
     return chunks
-

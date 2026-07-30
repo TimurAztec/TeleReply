@@ -1,6 +1,10 @@
 import json
-import tiktoken
+import os
 import re
+from dotenv import load_dotenv
+import anthropic
+
+load_dotenv()
 
 # Define file paths
 input_file = "fine_tuning_data.jsonl"
@@ -8,17 +12,20 @@ output_file = "edit_fine_tuning_data.jsonl"
 
 # Set the token limit
 TOKEN_LIMIT = 999999
-MODEL_NAME = "gpt-4o-mini-2024-07-18"
+MODEL_NAME = "claude-haiku-4-5"
 
-# Initialize tokenizer
-encoding = tiktoken.encoding_for_model(MODEL_NAME)
+# Anthropic client used for token counting
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 # Regex pattern to detect URLs
 URL_PATTERN = re.compile(r"https?://\S+|www\.\S+")
 
 def count_tokens(text):
-    """Returns the number of tokens in a given text."""
-    return len(encoding.encode(text))
+    """Returns the number of tokens in a given text, per Claude's tokenizer."""
+    return client.messages.count_tokens(
+        model=MODEL_NAME,
+        messages=[{"role": "user", "content": text}],
+    ).input_tokens
 
 # Read all data from the input file
 data_list = []

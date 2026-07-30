@@ -1,27 +1,16 @@
 import json
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
-import random
-from typing import List, Dict, Any
+import anthropic
 
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-print(OPENAI_API_KEY)
-
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 COMMANDS = ["/next-msg", "/stop-conversation", "/search"]
 
-def generate_prompt_answer_pair() -> dict:
-    """
-    Ask the model to generate a new prompt and a corresponding assistant reply
-    following the command rules.
-    Returns a dict in the JSONL dataset format.
-    """
-    system_msg = """
-You are a conversation dataset generator. 
+SYSTEM_PROMPT = """You are a conversation dataset generator.
 Your task:
 1. Generate a short user message (prompt).
 2. Generate a reply to it from the assistant.
@@ -30,29 +19,59 @@ Follow these rules in the assistant reply:
 - When a conversation ends naturally or someone instructs you to stop or go to sleep, reply with /stop-conversation
 - If the topic requires additional research, reply with /search
 Return only the prompt and the reply in a conversational style.
-Do not include any system messages in the output.
-Format the response in JSON as:
-{"messages":[{"role":"user","content":"<prompt>"},{"role":"assistant","content":"<reply>","weight":0.5}]}
-"""
+Do not include any system messages in the output."""
 
-    resp = openai_client.chat.completions.create(
-        model="gpt-4.1-nano",
-        messages=[{"role": "system", "content": system_msg}],
-        temperature=0.7,
-        max_tokens=100
+OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "messages": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "role": {"type": "string", "enum": ["user", "assistant"]},
+                    "content": {"type": "string"},
+                },
+                "required": ["role", "content"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["messages"],
+    "additionalProperties": False,
+}
+
+
+def generate_prompt_answer_pair() -> dict:
+    """
+    Ask the model to generate a new prompt and a corresponding assistant reply
+    following the command rules.
+    Returns a dict in the JSONL dataset format.
+    """
+    resp = anthropic_client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=200,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": "Generate one prompt/reply pair."}],
+        output_config={"format": {"type": "json_schema", "schema": OUTPUT_SCHEMA}},
     )
 
-    # The model returns a JSON string as text; parse it
+    text = next(b.text for b in resp.content if b.type == "text")
+
     try:
-        data = json.loads(resp.choices[0].message.content)
+        data = json.loads(text)
     except json.JSONDecodeError:
-        # fallback if the model output is not perfect JSON
         data = {
             "messages": [
                 {"role": "user", "content": "placeholder prompt"},
-                {"role": "assistant", "content": "/stop-conversation", "weight": 0.5}
+                {"role": "assistant", "content": "/stop-conversation"},
             ]
         }
+
+    for msg in data["messages"]:
+        if msg.get("role") == "assistant":
+            msg["weight"] = 0.5
+
     return data
 
 
